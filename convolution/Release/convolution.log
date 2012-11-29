@@ -1,0 +1,7 @@
+﻿  Convolve.cpp
+  ConvolveTest.cpp
+  Main.cpp
+  Generating code
+  Finished generating code
+gtest.lib(gtest-all.obj) : warning LNK4099: PDB 'vc100.pdb' was not found with 'gtest.lib(gtest-all.obj)' or at 'C:\Users\Chris\Desktop\UNI\CPSC501\A4\Chris.Nguyen.501.A4\convolution\Release\vc100.pdb'; linking object as if no debug info
+  convolution.vcxproj -> C:\Users\Chris\Desktop\UNI\CPSC501\A4\Chris.Nguyen.501.A4\convolution\Release\convolution.exe
