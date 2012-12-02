@@ -21,6 +21,9 @@
     <ClInclude Include="src\Convolve.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\Wave.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="convolution.rc">
@@ -37,5 +40,19 @@
     <ClCompile Include="src\TestConvolve.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\Wave.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="sounds\ir\stereo\IR_STEREO_LargeBriteHall.wav">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="sounds\ir\mono\IR_MONO_LargeBriteHall.wav">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="sounds\dry\DRY_DefievreJazzVibraphone.wav">
+      <Filter>Resource Files</Filter>
+    </None>
   </ItemGroup>
 </Project>

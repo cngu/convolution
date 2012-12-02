@@ -48,8 +48,13 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>C:\gtest-1.6.0\msvc\gtest\Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>gtestd.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <SubSystem>NotSet</SubSystem>
+      <SubSystem>Console</SubSystem>
+      <Profile>true</Profile>
     </Link>
+    <PostBuildEvent>
+      <Command>
+      </Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -66,13 +71,13 @@
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalLibraryDirectories>C:\gtest-1.6.0\msvc\gtest\Release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>gtest.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <SubSystem>
-      </SubSystem>
+      <SubSystem>Console</SubSystem>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="resource.h" />
     <ClInclude Include="src\Convolve.h" />
+    <ClInclude Include="src\Wave.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="convolution.rc" />
@@ -81,6 +86,12 @@
     <ClCompile Include="src\Convolve.cpp" />
     <ClCompile Include="src\Main.cpp" />
     <ClCompile Include="src\TestConvolve.cpp" />
+    <ClCompile Include="src\Wave.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="sounds\dry\DRY_DefievreJazzVibraphone.wav" />
+    <None Include="sounds\ir\mono\IR_MONO_LargeBriteHall.wav" />
+    <None Include="sounds\ir\stereo\IR_STEREO_LargeBriteHall.wav" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
