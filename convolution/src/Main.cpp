@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <iostream>
 #include <memory>
 
@@ -19,7 +20,7 @@ bool checkArgs(int argc, char* argv[])
 	// TODO: Check file extensions for .wav, .aiff, .snd
 	// Initially use rfind for '.' and then substr. and then comparison (yet another loop)
 	// Code tuning: unrolling
-	if (argc != 4) {
+	if (argc != 4 && argc != 5) {
 		usage();
 		return false;
 	}
@@ -116,6 +117,8 @@ void writeWaveFileHeader(int channels, int numberSamples, int bitsPerSample,
 	fwriteIntLSB(dataChunkSize, outputFile);
 }
 
+
+
 int main(int argc, char* argv[])
 {
 	cout << endl;
@@ -124,6 +127,7 @@ int main(int argc, char* argv[])
 	if (! checkArgs(argc, argv))
 		return 1;
 
+	/* Read wave files */
 	unique_ptr<Wave> dryRecording = createWave(argv[1]);
 	unique_ptr<Wave> impulseResponse = createWave(argv[2]);
 
@@ -133,31 +137,90 @@ int main(int argc, char* argv[])
 	if (dryRecording == nullptr || impulseResponse == nullptr)
 		return 1;
 
-	/* Perform Convolution */
-	int resultSize = dryRecording->dataSize + impulseResponse->dataSize - 1;
-	unique_ptr<short[]> result(new short[resultSize]);
-	Convolver::convolve(dryRecording, impulseResponse, result.get(), resultSize);
-	
-	/* Create resulting .wav file */
-	// Note: 
-	//	- Always uses impulseResponses numChannels for Bonus#1
-	//  - Always uses 16 bits per sample and 44.1 kHz sample rate as per assignment specifications
-	FILE *outputWaveFile = fopen(argv[3], "wb");
-	cout << "Writing to " << argv[3] << endl;
-	writeWaveFileHeader(impulseResponse->numChannels, resultSize, 16, 44100, outputWaveFile);
-	for (int i = 0; i < resultSize; i++) {
-		fwriteShortLSB(result[i], outputWaveFile);
-	}
+	/* Perform Time-Domain Convolution */
+	if (argv[4] == nullptr) {
+		int resultSize = dryRecording->dataSize + impulseResponse->dataSize - 1;
+		unique_ptr<short[]> result(new short[resultSize]);
+		Convolver::convolve(dryRecording, impulseResponse, result.get(), resultSize);
 
+		/* Create resulting .wav file */
+		// Note: 
+		//	- Always uses impulseResponses numChannels for Bonus#1
+		//  - Always uses 16 bits per sample and 44.1 kHz sample rate as per assignment specifications
+		FILE *outputWaveFile = fopen(argv[3], "wb");
+		cout << "Writing to " << argv[3] << endl;
+		writeWaveFileHeader(impulseResponse->numChannels, resultSize, 16, 44100, outputWaveFile);
+		for (int i = 0; i < resultSize; i++) {
+			fwriteShortLSB(result[i], outputWaveFile);
+		}
+		fclose(outputWaveFile);
+
+		/* Free memory taken up by result */
+		result = nullptr;
+	}
+	/* Perform FFT Convolution - Written by Abbas Sarraf. */
+	else {
+		int structuredSize = 1;
+		while ( structuredSize < dryRecording->dataSize || structuredSize < impulseResponse->dataSize )
+			structuredSize *= 2;	// TODO: Replace with bit shift
+
+		double *F = new double[structuredSize * 2];
+		double *G = new double[structuredSize * 2];
+		double *R = new double[structuredSize * 2];
+
+		/* Transform Time-Domain to Frequency-Domain */
+		Convolver::timeDomainToFreqDomain(dryRecording->data, dryRecording->dataSize, F, structuredSize);
+		Convolver::timeDomainToFreqDomain(impulseResponse->data, impulseResponse->dataSize, G, structuredSize);
+
+		/* Perform Frequency-Domain Convolution */
+		Convolver::fftConvolve(F, G, R, structuredSize);
+
+		/* Convert Frequency-Domain back to Time-Domain */
+		Convolver::four1(R-1, structuredSize, -1);
+
+		/* Divide everything by N and find min/max */
+		double min = R[0]/structuredSize, max = R[0]/structuredSize;
+		for (int i = 0; i < structuredSize*2; i++) {
+			R[i] /= structuredSize;
+			if (R[i] < min)
+				min = R[i];
+			if (R[i] > max)
+				max = R[i];
+		}
+
+		//min = *min_element(R, R+(structuredSize*2));
+		//max = *max_element(R, R+(structuredSize*2));
+
+		cout << "MIN: " << min << " MAX: " << max << endl;
+
+		/* Normalize result in R to be between -32768 and 32767 */
+		for (int i = 0; i < structuredSize*2; i++)
+			R[i] = Convolver::normalize(R[i], min, max, -32768, 32767);
+
+		FILE *outputWaveFile = fopen(argv[3], "wb");
+		writeWaveFileHeader(impulseResponse->numChannels, structuredSize, 16, 44100, outputWaveFile);
+		for (int i = 0; i < structuredSize*2; i++) {
+			fwriteShortLSB(R[i], outputWaveFile);
+		}
+		fclose(outputWaveFile);
+
+		delete[] F;
+		delete[] G;
+		delete[] R;
+	}
+	
+	
+
+	
 
 	/* Run tests */
 	//::testing::InitGoogleTest(&argc, argv);
 	//RUN_ALL_TESTS();
 
-	/* Paranoid Parrot is afraid of memory leaks */
+	/* Destroy smart pointers which will release the managed object */
 	dryRecording = nullptr;
 	impulseResponse = nullptr;
-	result = nullptr;
+	
 
 	return 0;
 }
