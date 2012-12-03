@@ -1,4 +1,9 @@
 ﻿  Wave.cpp
-Convolve.obj : warning LNK4075: ignoring '/EDITANDCONTINUE' due to '/OPT:REF' specification
+  Convolver.cpp
+c:\users\chris\desktop\uni\cpsc501\a4\chris.nguyen.501.a4\convolution\convolution\src\convolver.cpp(49): warning C4244: '=' : conversion from 'double' to 'float', possible loss of data
+c:\users\chris\desktop\uni\cpsc501\a4\chris.nguyen.501.a4\convolution\convolution\src\convolver.cpp(56): warning C4244: '=' : conversion from 'double' to 'float', possible loss of data
+c:\users\chris\desktop\uni\cpsc501\a4\chris.nguyen.501.a4\convolution\convolution\src\convolver.cpp(81): warning C4244: 'argument' : conversion from 'double' to 'float', possible loss of data
+  Generating Code...
+Convolver.obj : warning LNK4075: ignoring '/EDITANDCONTINUE' due to '/OPT:REF' specification
 gtestd.lib(gtest-all.obj) : warning LNK4099: PDB 'vc100.pdb' was not found with 'gtestd.lib(gtest-all.obj)' or at 'C:\Users\Chris\Desktop\UNI\CPSC501\A4\Chris.Nguyen.501.A4\convolution\Debug\vc100.pdb'; linking object as if no debug info
   convolution.vcxproj -> C:\Users\Chris\Desktop\UNI\CPSC501\A4\Chris.Nguyen.501.A4\convolution\Debug\convolution.exe

@@ -76,22 +76,21 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="resource.h" />
-    <ClInclude Include="src\Convolve.h" />
+    <ClInclude Include="src\Convolver.h" />
     <ClInclude Include="src\Wave.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="convolution.rc" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\Convolve.cpp" />
+    <ClCompile Include="src\Convolver.cpp" />
     <ClCompile Include="src\Main.cpp" />
     <ClCompile Include="src\TestConvolve.cpp" />
     <ClCompile Include="src\Wave.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="sounds\dry\DRY_DefievreJazzVibraphone.wav" />
-    <None Include="sounds\ir\mono\IR_MONO_LargeBriteHall.wav" />
-    <None Include="sounds\ir\stereo\IR_STEREO_LargeBriteHall.wav" />
+    <None Include="sounds\dry\testCase1.wav" />
+    <None Include="sounds\ir\mono\smallCave.wav" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

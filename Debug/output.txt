@@ -1,0 +1,246 @@
+
+Reading chunkSize 4 bytes into address: 4
+936460
+Reading subchunk1Size4 bytes into address: 16
+16
+Reading audioFormat2 bytes into address: 20
+1
+Reading numChannels2 bytes into address: 22
+1
+Reading sampleRate4 bytes into address: 24
+44100
+Reading byteRate4 bytes into address: 28
+88200
+Reading blockAlign2 bytes into address: 32
+2
+Reading bitsPerSample2 bytes into address: 34
+16
+Reading subchunk2Size4 bytes into address: 40
+936424
+-20284
+-21565
+-4414
+19650
+8642
+15298
+9410
+-319
+14273
+16320
+-4929
+-31297
+-3906
+-12354
+4543
+27327
+-11329
+15296
+-22080
+30145
+6082
+19650
+29890
+7874
+-31039
+3009
+22976
+192
+192
+19903
+-13123
+-5956
+26301
+5566
+12990
+-10051
+7613
+-30788
+32444
+-2884
+5565
+10172
+9915
+-3654
+-17222
+4282
+24505
+-17224
+952
+-29513
+-22345
+-5449
+-21065
+-1866
+21942
+-17739
+-8012
+8884
+30899
+-3662
+11443
+-6477
+26292
+26804
+-29260
+-9036
+692
+2483
+20403
+28339
+435
+2227
+-30541
+11700
+-1612
+2742
+24503
+2744
+1719
+-32331
+-25420
+-11085
+-334
+26290
+5298
+-19535
+-29263
+-20303
+-23119
+-6735
+9906
+-2895
+-23631
+30641
+-13135
+-5967
+-31823
+8113
+-23376
+-19024
+Reading chunkSize 4 bytes into address: 4
+96942
+Reading subchunk1Size4 bytes into address: 16
+16
+Reading audioFormat2 bytes into address: 20
+1
+Reading numChannels2 bytes into address: 22
+1
+Reading sampleRate4 bytes into address: 24
+44100
+Reading byteRate4 bytes into address: 28
+88200
+Reading blockAlign2 bytes into address: 32
+2
+Reading bitsPerSample2 bytes into address: 34
+16
+Reading subchunk2Size4 bytes into address: 40
+96906
+-5633
+7936
+-8705
+10752
+-15617
+17408
+-31745
+-29184
+23034
+7422
+3072
+2296
+28921
+-27906
+-30713
+-24318
+22795
+-12031
+-14076
+-5118
+-6652
+9476
+-28411
+14597
+-747
+-14341
+18696
+-20987
+-4615
+-12021
+21759
+-29962
+30206
+-3582
+-3328
+-11523
+8944
+27144
+-8707
+-5883
+19977
+-23794
+29186
+-27652
+-5120
+27396
+-25600
+2811
+29946
+4351
+3325
+16636
+-23813
+-29443
+-15871
+-12037
+19711
+29701
+19454
+-25863
+-7682
+9985
+13315
+-7936
+15871
+4097
+14849
+-23299
+23809
+21504
+-24320
+-20479
+16894
+24057
+18942
+27391
+16379
+-3843
+10239
+-1539
+-13568
+7933
+13824
+-12037
+-31226
+-21245
+-30978
+25087
+-26627
+25856
+32511
+-4866
+3329
+26118
+30461
+5376
+-17922
+-12543
+6911
+-27136
+Dry->DataSize: 468212
+Done normalizing dry recording
+IR->DataSize: 48453
+Done normalizing impulse response
+25%
+50%
+75%
+90%
+Writing to ../convolution/output/output.wav

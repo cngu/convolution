@@ -1,5 +1,5 @@
 #include <gtest\gtest.h>
-#include "..\src\Convolve.h"
+#include "..\src\Convolver.h"
 
 class Foo {
 
@@ -8,11 +8,11 @@ class Foo {
 class FooTest : public ::testing::Test 
 {
 public:
-	Convolve *c;
+	Convolver *c;
 
 	FooTest() {
 		// You can do set-up work for each test here.
-		c = new Convolve();
+		c = new Convolver();
 	}
 
 	virtual ~FooTest() {
@@ -37,7 +37,7 @@ public:
 TEST_F(FooTest, TestName1) 
 {
 	delete c;
-	c = new Convolve;
+	c = new Convolver;
 	delete c;
 	t();
 	EXPECT_EQ(0.0, 0.00);

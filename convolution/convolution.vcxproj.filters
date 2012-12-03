@@ -18,10 +18,10 @@
     <ClInclude Include="resource.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\Convolve.h">
+    <ClInclude Include="src\Wave.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\Wave.h">
+    <ClInclude Include="src\Convolver.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -31,9 +31,6 @@
     </ResourceCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\Convolve.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\Main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -43,15 +40,15 @@
     <ClCompile Include="src\Wave.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\Convolver.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="sounds\ir\stereo\IR_STEREO_LargeBriteHall.wav">
+    <None Include="sounds\dry\testCase1.wav">
       <Filter>Resource Files</Filter>
     </None>
-    <None Include="sounds\ir\mono\IR_MONO_LargeBriteHall.wav">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="sounds\dry\DRY_DefievreJazzVibraphone.wav">
+    <None Include="sounds\ir\mono\smallCave.wav">
       <Filter>Resource Files</Filter>
     </None>
   </ItemGroup>
