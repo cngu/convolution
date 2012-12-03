@@ -1,19 +1,15 @@
 #ifndef CONVOLVER_H
 #define CONVOLVER_H
 
-#include <memory>
-
-#include "Wave.h"
+#include "SoundFile.h"
 
 class Convolver
 {
 private:
-	// Variables
 
 public:
 	static void convolve(const float x[], int N, const float h[], int M, float y[], int P);
-	static void convolve(const std::unique_ptr<Wave>& dry, const std::unique_ptr<Wave>& ir, 
-                  short y[], int P);
+	static void convolve(SoundFile* dry, SoundFile* ir, short y[], int P);
 
 	static void four1(double data[], int nn, int isign);
 	static void timeDomainToFreqDomain(short *signal, int signalSize, double *signaleStructured, int structuredSize);

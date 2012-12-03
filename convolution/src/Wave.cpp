@@ -1,6 +1,5 @@
 #include <fstream>
 #include <iostream>
-#include <memory>
 #include <stdexcept>
 #include <string>
 
@@ -10,7 +9,7 @@ using namespace std;
 
 Wave::Wave(char* wavePath)
 {
-	loadWave(wavePath);
+	load(wavePath);
 }
 
 Wave::~Wave()
@@ -18,21 +17,27 @@ Wave::~Wave()
 	delete[] data;
 }
 
-void Wave::readShortChunk(ifstream& ifs, int& offset, short& value)
+int Wave::getNumChannels()
 {
-	ifs.seekg(offset, ios::beg);
-	ifs.read( (char*) &value, sizeof(value) );
-	offset += sizeof(value);
+	return numChannels;
 }
 
-void Wave::readIntChunk(ifstream& ifs, int& offset, int& value)
+int Wave::getDataSize()
 {
-	ifs.seekg(offset, ios::beg);
-	ifs.read( (char*) &value, sizeof(value) );
-	offset += sizeof(value);
+	return dataSize;
 }
 
-void Wave::loadWave(char* loadPath)
+short Wave::getBitsPerSample()
+{
+	return bitsPerSample;
+}
+
+short* Wave::getData()
+{
+	return data;
+}
+
+void Wave::load(char* loadPath)
 {
 	ifstream ifs(loadPath, ios::in | ios::binary);
 	if (ifs.fail()) {
@@ -66,19 +71,12 @@ void Wave::loadWave(char* loadPath)
 		data = new short[dataSize];
 
 		short sample;
-		min = data[0];
-		max = data[0];
 		for (int i = 0; i < subchunk2Size; i+=2) {
 			// TODO: Shift left 8 instead
 			sample = (short) ( (unsigned char) rawData[i] );
 			sample += (short) ( (unsigned char) rawData[i+1]) * 256;
 			// TODO: Shift RIGHT 1 instead
 			data[i/2] = sample;
-
-			if (data[i/2] < min)
-				min = data[i/2];
-			if (data[i/2] > max)
-				max = data[i/2];
 		}
 	}
 	else {

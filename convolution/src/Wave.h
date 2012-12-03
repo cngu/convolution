@@ -1,9 +1,9 @@
 #ifndef WAVE_H
 #define WAVE_H
 
-#include <memory>
+#include "SoundFile.h"
 
-class Wave 
+class Wave : public SoundFile
 {
 public:
 	static const int chunkID     = 0x46464952;  // "FFIR"
@@ -24,18 +24,20 @@ public:
 	int dataSize;
 	short* data;
 
-	short min;
-	short max;
-
 public:
 	Wave(char* wavePath);
 	~Wave();
 
-	void loadWave(char* loadPath);
+	void load(char* loadPath);
 
-private:
-	void readIntChunk(std::ifstream& ifs, int& offset, int& value);
-	void readShortChunk(std::ifstream& ifs, int& offset, short& value);
+	int getNumChannels();
+	int getDataSize();
+	short getBitsPerSample();
+	short* getData();
+
+	
+
+
 
 };
 

@@ -1,13 +1,16 @@
 #include <algorithm>
 #include <iostream>
-#include <memory>
+#include <string>
 
 #include "Convolver.h"
+#include "SoundFile.h"
 #include "Wave.h"
+#include "Snd.h"
+#include "Aiff.h"
 #include "gtest\gtest.h"
 
 // Control directives
-//#define FFT		// Uncomment to use Frequency-Domain Convolution rather than Time Domain
+#define FFT		// Uncomment to use Frequency-Domain Convolution rather than Time Domain
 //#define TESTS		// Uncomment to run tests
 
 #define BITS_PER_SAMPLE 16
@@ -21,28 +24,28 @@ void usage()
 	cout << "All files must be one of the following formats: .wav .aiff .snd" << endl;   
 }
 
+bool checkExtensions(char* filename) 
+{
+	string extension = SoundFile::parseExtension(filename);
+
+	if (extension.compare(".wav") == 0 ||
+		extension.compare(".aiff") == 0 ||
+		extension.compare(".snd") == 0)
+		return true;
+
+	return false;
+}
+
 // Returns true if arguments are valid. False otherwise.
 bool checkArgs(int argc, char* argv[])
 {
-	// TODO: Check file extensions for .wav, .aiff, .snd
-	// Initially use rfind for '.' and then substr. and then comparison (yet another loop)
-	// Code tuning: unrolling
-	if (argc != 4 && argc != 5) {
+	/* Check number of arguments and extensions */
+	if (argc != 4 || !checkExtensions(argv[1]) || !checkExtensions(argv[2]) || !checkExtensions(argv[3])) {
 		usage();
 		return false;
 	}
-	return true;
-}
 
-unique_ptr<Wave> createWave(char* filename)
-{
-	try {
-		return unique_ptr<Wave>(new Wave(filename));
-	}
-	catch (invalid_argument& ia) {
-		cout << ia.what() << endl;
-		return nullptr;
-	}
+	return true;
 }
 
 /* Written By Leonard Manzara */
@@ -154,8 +157,8 @@ int main(int argc, char* argv[])
 		return 1;
 
 	/* Read wave files */
-	unique_ptr<Wave> dryRecording = createWave(argv[1]);
-	unique_ptr<Wave> impulseResponse = createWave(argv[2]);
+	SoundFile* dryRecording = SoundFile::create(argv[1]);
+	SoundFile* impulseResponse = SoundFile::create(argv[2]);
 
 	/* End program if any input file is corrupted or nonexistant */
 	// TODO: do this check in between createWave's above. If first 
@@ -163,24 +166,24 @@ int main(int argc, char* argv[])
 	if (dryRecording == nullptr || impulseResponse == nullptr)
 		return 1;
 
-	cout << "DR Size: " << dryRecording->dataSize << " IR Size: " << impulseResponse->dataSize << endl;
+	cout << "DR Size: " << dryRecording->getDataSize() << " IR Size: " << impulseResponse->getDataSize() << endl;
 
 	/* Store result of convolution */
-	unique_ptr<short[]> result;
+	short* result;
 
 #ifndef FFT
 	/* Perform Time-Domain Convolution */
-	int resultSize = dryRecording->dataSize + impulseResponse->dataSize - 1;
-	result.reset(new short[resultSize]);
-	Convolver::convolve(dryRecording, impulseResponse, result.get(), resultSize);
+	int resultSize = dryRecording->getDataSize() + impulseResponse->getDataSize() - 1;
+	result = new short[resultSize];
+	Convolver::convolve(dryRecording, impulseResponse, result, resultSize);
 
 	/* Save resulting .wav file */
-	saveWaveFile(argv[3], impulseResponse->numChannels, resultSize, BITS_PER_SAMPLE, 
-					SAMPLE_RATE, result.get(), resultSize);
+	saveWaveFile(argv[3], impulseResponse->getNumChannels(), resultSize, BITS_PER_SAMPLE, 
+					SAMPLE_RATE, result, resultSize);
 #else
 	/* Perform FFT Convolution */
 	int structuredSize = 1;
-	while ( structuredSize < dryRecording->dataSize || structuredSize < impulseResponse->dataSize )
+	while ( structuredSize < dryRecording->getDataSize() || structuredSize < impulseResponse->getDataSize() )
 		structuredSize *= 2;	// TODO: Replace with bit shift
 
 	double *F = new double[structuredSize * 2];
@@ -188,8 +191,8 @@ int main(int argc, char* argv[])
 	double *R = new double[structuredSize * 2];
 
 	/* Transform Time-Domain to Frequency-Domain */
-	Convolver::timeDomainToFreqDomain(dryRecording->data, dryRecording->dataSize, F, structuredSize);
-	Convolver::timeDomainToFreqDomain(impulseResponse->data, impulseResponse->dataSize, G, structuredSize);
+	Convolver::timeDomainToFreqDomain(dryRecording->getData(), dryRecording->getDataSize(), F, structuredSize);
+	Convolver::timeDomainToFreqDomain(impulseResponse->getData(), impulseResponse->getDataSize(), G, structuredSize);
 
 	/* Perform Frequency-Domain Convolution */
 	Convolver::fftConvolve(F, G, R, structuredSize);
@@ -208,13 +211,13 @@ int main(int argc, char* argv[])
 	}
 
 	/* Normalize result to be between -32768 and 32767 */
-	result.reset(new short[structuredSize]);
+	result = new short[structuredSize];
 	for (int i = 0; i < structuredSize*2; i+=2)
 		result[i/2] = Convolver::normalize(R[i], min, max, -32768, 32767);
 
 	/* Save resulting .wav file */
-	saveWaveFile(argv[3], impulseResponse->numChannels, structuredSize, BITS_PER_SAMPLE, 
-					SAMPLE_RATE, result.get(), structuredSize);
+	saveWaveFile(argv[3], impulseResponse->getNumChannels(), structuredSize, BITS_PER_SAMPLE, 
+					SAMPLE_RATE, result, structuredSize);
 
 	delete[] F;
 	delete[] G;
@@ -223,10 +226,10 @@ int main(int argc, char* argv[])
 	
 
 
-	/* Destroy smart pointers which will release the managed object */
-	dryRecording = nullptr;
-	impulseResponse = nullptr;
-	result = nullptr;
+	/* Free memory */
+	delete dryRecording;
+	delete impulseResponse;
+	delete[] result;
 
 	return 0;
 }

@@ -1,7 +1,6 @@
 #include <cstdio>
 #include <iostream>
 #include <math.h>
-#include <memory>
 
 #include "Convolver.h"
 #include "Wave.h"
@@ -38,25 +37,25 @@ void Convolver::convolve(const float x[], int N, const float h[], int M, float y
 }
 
 /* Written By Abbas Sarraf. Modified by Chris Nguyen. */
-void Convolver::convolve(const unique_ptr<Wave>& dry, const unique_ptr<Wave>& ir, short y[], int P)
+void Convolver::convolve(SoundFile* dry, SoundFile* ir, short y[], int P)
 {
 	// TODO: Combine these two loops
-	float *x = new float[dry->dataSize];
+	float *x = new float[dry->getDataSize()];
 
 	// TODO: Move pow() out of loop, don't need to recalculate every iteration
 	// TODO: Replace pow with either adding every loop or bit shifting and adding
 	//TODO: Replace 2.0 with 2.0f
-	for (int i = 0; i < dry->dataSize; i++) {
-		x[i] = (float) dry->data[i] / pow(2.0, dry->bitsPerSample - 1);
+	for (int i = 0; i < dry->getDataSize(); i++) {
+		x[i] = (float) dry->getData()[i] / pow(2.0, dry->getBitsPerSample() - 1);
 	}
 
-	float *h = new float[ir->dataSize];
-	for (int i = 0; i < ir->dataSize; i++) {
-		h[i] = (float) ir->data[i] / pow(2.0, ir->bitsPerSample - 1);
+	float *h = new float[ir->getDataSize()];
+	for (int i = 0; i < ir->getDataSize(); i++) {
+		h[i] = (float) ir->getData()[i] / pow(2.0, ir->getBitsPerSample() - 1);
 	}
 
 	float *yTemp = new float[P];
-	convolve(x, dry->dataSize, h, ir->dataSize, yTemp, P);
+	convolve(x, dry->getDataSize(), h, ir->getDataSize(), yTemp, P);
 
 	/* Find the lower and upper bounds of the convolved output*/
 	float oldMin = yTemp[0], oldMax = yTemp[0];
