@@ -32,6 +32,7 @@ public:
 	~Wave();
 
 	void loadWave(char* loadPath);
+
 };
 
 

@@ -117,10 +117,27 @@ void writeWaveFileHeader(int channels, int numberSamples, int bitsPerSample,
 	fwriteIntLSB(dataChunkSize, outputFile);
 }
 
+void writeWaveFileData(short data[], int len, FILE* outputFile)
+{
+	for (int i = 0; i < len; i++) {
+		fwriteShortLSB(data[i], outputFile);
+	}
+}
 
+void saveWaveFile(char* outputFile, int channels, int numberSamples, int bitsPerSample, 
+				  double sampleRate, short data[], int dataLen) 
+{
+	FILE *outputWaveFile = fopen(outputFile, "wb");
+	writeWaveFileHeader(channels, numberSamples, bitsPerSample, sampleRate, outputWaveFile);
+	writeWaveFileData(data, dataLen, outputWaveFile);
+	fclose(outputWaveFile);
+}
 
 int main(int argc, char* argv[])
 {
+	/* Run tests */
+	//::testing::InitGoogleTest(&argc, argv);
+	//RUN_ALL_TESTS();
 	cout << endl;
 
 	/* Ensure dry, IR, and output file names are provided */
@@ -137,26 +154,17 @@ int main(int argc, char* argv[])
 	if (dryRecording == nullptr || impulseResponse == nullptr)
 		return 1;
 
+	/* Store result of convolution */
+	unique_ptr<short[]> result;
+
 	/* Perform Time-Domain Convolution */
 	if (argv[4] == nullptr) {
 		int resultSize = dryRecording->dataSize + impulseResponse->dataSize - 1;
-		unique_ptr<short[]> result(new short[resultSize]);
+		result.reset(new short[resultSize]);
 		Convolver::convolve(dryRecording, impulseResponse, result.get(), resultSize);
 
-		/* Create resulting .wav file */
-		// Note: 
-		//	- Always uses impulseResponses numChannels for Bonus#1
-		//  - Always uses 16 bits per sample and 44.1 kHz sample rate as per assignment specifications
-		FILE *outputWaveFile = fopen(argv[3], "wb");
-		cout << "Writing to " << argv[3] << endl;
-		writeWaveFileHeader(impulseResponse->numChannels, resultSize, 16, 44100, outputWaveFile);
-		for (int i = 0; i < resultSize; i++) {
-			fwriteShortLSB(result[i], outputWaveFile);
-		}
-		fclose(outputWaveFile);
-
-		/* Free memory taken up by result */
-		result = nullptr;
+		/* Save resulting .wav file */
+		saveWaveFile(argv[3], impulseResponse->numChannels, resultSize, 16, 44100, result.get(), resultSize);
 	}
 	/* Perform FFT Convolution - Written by Abbas Sarraf. */
 	else {
@@ -180,7 +188,7 @@ int main(int argc, char* argv[])
 
 		/* Divide everything by N and find min/max */
 		double min = R[0]/structuredSize, max = R[0]/structuredSize;
-		for (int i = 0; i < structuredSize*2; i++) {
+		for (int i = 0; i < structuredSize*2; i+=2) {
 			R[i] /= structuredSize;
 			if (R[i] < min)
 				min = R[i];
@@ -188,21 +196,13 @@ int main(int argc, char* argv[])
 				max = R[i];
 		}
 
-		//min = *min_element(R, R+(structuredSize*2));
-		//max = *max_element(R, R+(structuredSize*2));
-
-		cout << "MIN: " << min << " MAX: " << max << endl;
-
 		/* Normalize result in R to be between -32768 and 32767 */
-		for (int i = 0; i < structuredSize*2; i++)
-			R[i] = Convolver::normalize(R[i], min, max, -32768, 32767);
+		result.reset(new short[structuredSize]);
+		for (int i = 0; i < structuredSize*2; i+=2)
+			result[i/2] = Convolver::normalize(R[i], min, max, -32768, 32767);
 
-		FILE *outputWaveFile = fopen(argv[3], "wb");
-		writeWaveFileHeader(impulseResponse->numChannels, structuredSize, 16, 44100, outputWaveFile);
-		for (int i = 0; i < structuredSize*2; i++) {
-			fwriteShortLSB(R[i], outputWaveFile);
-		}
-		fclose(outputWaveFile);
+		/* Save resulting .wav file */
+		saveWaveFile(argv[3], impulseResponse->numChannels, structuredSize, 16, 44100, result.get(), structuredSize);
 
 		delete[] F;
 		delete[] G;
@@ -211,16 +211,11 @@ int main(int argc, char* argv[])
 	
 	
 
-	
-
-	/* Run tests */
-	//::testing::InitGoogleTest(&argc, argv);
-	//RUN_ALL_TESTS();
 
 	/* Destroy smart pointers which will release the managed object */
 	dryRecording = nullptr;
 	impulseResponse = nullptr;
-	
+	result = nullptr;
 
 	return 0;
 }
