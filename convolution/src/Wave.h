@@ -33,6 +33,10 @@ public:
 
 	void loadWave(char* loadPath);
 
+private:
+	void readIntChunk(std::ifstream& ifs, int& offset, int& value);
+	void readShortChunk(std::ifstream& ifs, int& offset, short& value);
+
 };
 
 

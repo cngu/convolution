@@ -6,6 +6,13 @@
 #include "Wave.h"
 #include "gtest\gtest.h"
 
+// Control directives
+//#define FFT		// Uncomment to use Frequency-Domain Convolution rather than Time Domain
+//#define TESTS		// Uncomment to run tests
+
+#define BITS_PER_SAMPLE 16
+#define SAMPLE_RATE 44100
+
 using namespace std;
 
 void usage()
@@ -135,10 +142,12 @@ void saveWaveFile(char* outputFile, int channels, int numberSamples, int bitsPer
 
 int main(int argc, char* argv[])
 {
+#ifdef TESTS
 	/* Run tests */
-	//::testing::InitGoogleTest(&argc, argv);
-	//RUN_ALL_TESTS();
-	cout << endl;
+	::testing::InitGoogleTest(&argc, argv);
+	RUN_ALL_TESTS();
+	return 0;
+#endif
 
 	/* Ensure dry, IR, and output file names are provided */
 	if (! checkArgs(argc, argv))
@@ -154,61 +163,63 @@ int main(int argc, char* argv[])
 	if (dryRecording == nullptr || impulseResponse == nullptr)
 		return 1;
 
+	cout << "DR Size: " << dryRecording->dataSize << " IR Size: " << impulseResponse->dataSize << endl;
+
 	/* Store result of convolution */
 	unique_ptr<short[]> result;
 
+#ifndef FFT
 	/* Perform Time-Domain Convolution */
-	if (argv[4] == nullptr) {
-		int resultSize = dryRecording->dataSize + impulseResponse->dataSize - 1;
-		result.reset(new short[resultSize]);
-		Convolver::convolve(dryRecording, impulseResponse, result.get(), resultSize);
+	int resultSize = dryRecording->dataSize + impulseResponse->dataSize - 1;
+	result.reset(new short[resultSize]);
+	Convolver::convolve(dryRecording, impulseResponse, result.get(), resultSize);
 
-		/* Save resulting .wav file */
-		saveWaveFile(argv[3], impulseResponse->numChannels, resultSize, 16, 44100, result.get(), resultSize);
+	/* Save resulting .wav file */
+	saveWaveFile(argv[3], impulseResponse->numChannels, resultSize, BITS_PER_SAMPLE, 
+					SAMPLE_RATE, result.get(), resultSize);
+#else
+	/* Perform FFT Convolution */
+	int structuredSize = 1;
+	while ( structuredSize < dryRecording->dataSize || structuredSize < impulseResponse->dataSize )
+		structuredSize *= 2;	// TODO: Replace with bit shift
+
+	double *F = new double[structuredSize * 2];
+	double *G = new double[structuredSize * 2];
+	double *R = new double[structuredSize * 2];
+
+	/* Transform Time-Domain to Frequency-Domain */
+	Convolver::timeDomainToFreqDomain(dryRecording->data, dryRecording->dataSize, F, structuredSize);
+	Convolver::timeDomainToFreqDomain(impulseResponse->data, impulseResponse->dataSize, G, structuredSize);
+
+	/* Perform Frequency-Domain Convolution */
+	Convolver::fftConvolve(F, G, R, structuredSize);
+
+	/* Convert Frequency-Domain back to Time-Domain */
+	Convolver::four1(R-1, structuredSize, -1);
+
+	/* Divide everything by N and find min/max */
+	double min = R[0]/structuredSize, max = R[0]/structuredSize;
+	for (int i = 0; i < structuredSize*2; i+=2) {
+		R[i] /= structuredSize;
+		if (R[i] < min)
+			min = R[i];
+		if (R[i] > max)
+			max = R[i];
 	}
-	/* Perform FFT Convolution - Written by Abbas Sarraf. */
-	else {
-		int structuredSize = 1;
-		while ( structuredSize < dryRecording->dataSize || structuredSize < impulseResponse->dataSize )
-			structuredSize *= 2;	// TODO: Replace with bit shift
 
-		double *F = new double[structuredSize * 2];
-		double *G = new double[structuredSize * 2];
-		double *R = new double[structuredSize * 2];
+	/* Normalize result to be between -32768 and 32767 */
+	result.reset(new short[structuredSize]);
+	for (int i = 0; i < structuredSize*2; i+=2)
+		result[i/2] = Convolver::normalize(R[i], min, max, -32768, 32767);
 
-		/* Transform Time-Domain to Frequency-Domain */
-		Convolver::timeDomainToFreqDomain(dryRecording->data, dryRecording->dataSize, F, structuredSize);
-		Convolver::timeDomainToFreqDomain(impulseResponse->data, impulseResponse->dataSize, G, structuredSize);
+	/* Save resulting .wav file */
+	saveWaveFile(argv[3], impulseResponse->numChannels, structuredSize, BITS_PER_SAMPLE, 
+					SAMPLE_RATE, result.get(), structuredSize);
 
-		/* Perform Frequency-Domain Convolution */
-		Convolver::fftConvolve(F, G, R, structuredSize);
-
-		/* Convert Frequency-Domain back to Time-Domain */
-		Convolver::four1(R-1, structuredSize, -1);
-
-		/* Divide everything by N and find min/max */
-		double min = R[0]/structuredSize, max = R[0]/structuredSize;
-		for (int i = 0; i < structuredSize*2; i+=2) {
-			R[i] /= structuredSize;
-			if (R[i] < min)
-				min = R[i];
-			if (R[i] > max)
-				max = R[i];
-		}
-
-		/* Normalize result in R to be between -32768 and 32767 */
-		result.reset(new short[structuredSize]);
-		for (int i = 0; i < structuredSize*2; i+=2)
-			result[i/2] = Convolver::normalize(R[i], min, max, -32768, 32767);
-
-		/* Save resulting .wav file */
-		saveWaveFile(argv[3], impulseResponse->numChannels, structuredSize, 16, 44100, result.get(), structuredSize);
-
-		delete[] F;
-		delete[] G;
-		delete[] R;
-	}
-	
+	delete[] F;
+	delete[] G;
+	delete[] R;
+#endif
 	
 
 

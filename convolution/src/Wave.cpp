@@ -18,6 +18,20 @@ Wave::~Wave()
 	delete[] data;
 }
 
+void Wave::readShortChunk(ifstream& ifs, int& offset, short& value)
+{
+	ifs.seekg(offset, ios::beg);
+	ifs.read( (char*) &value, sizeof(value) );
+	offset += sizeof(value);
+}
+
+void Wave::readIntChunk(ifstream& ifs, int& offset, int& value)
+{
+	ifs.seekg(offset, ios::beg);
+	ifs.read( (char*) &value, sizeof(value) );
+	offset += sizeof(value);
+}
+
 void Wave::loadWave(char* loadPath)
 {
 	ifstream ifs(loadPath, ios::in | ios::binary);
@@ -25,67 +39,22 @@ void Wave::loadWave(char* loadPath)
 		throw invalid_argument("Wave::readWave: " + string(loadPath) + " could not be opened.");
 	}
 
+	/* Read Header */
 	int offset = 4;		// Skip ChunkID, start at ChunkSize
-	
-	cout << "Reading chunkSize " << sizeof(chunkSize) << " bytes into address: " << offset << endl;
-	ifs.seekg(offset, ios::beg);
-	ifs.read( (char*) &chunkSize, sizeof(chunkSize) );
-	offset += sizeof(chunkSize);
-	cout << chunkSize << endl;
-
+	readIntChunk(ifs, offset, chunkSize);
 	offset += sizeof(format);
 	offset += sizeof(subchunk1ID);
-
-	cout << "Reading subchunk1Size" << sizeof(subchunk1Size) << " bytes into address: " << offset << endl;
-	ifs.seekg(offset, ios::beg);
-	ifs.read( (char*) &subchunk1Size, sizeof(subchunk1Size) );
-	offset += sizeof(subchunk1Size);
-	cout << subchunk1Size << endl;
-
-	cout << "Reading audioFormat" << sizeof(audioFormat) << " bytes into address: " << offset << endl;
-	ifs.seekg(offset, ios::beg);
-	ifs.read( (char*) &audioFormat, sizeof(audioFormat) );
-	offset += sizeof(audioFormat);
-	cout << audioFormat << endl;
-
-	cout << "Reading numChannels" << sizeof(numChannels) << " bytes into address: " << offset << endl;
-	ifs.seekg(offset, ios::beg);
-	ifs.read( (char*) &numChannels, sizeof(numChannels) );
-	offset += sizeof(numChannels);
-	cout << numChannels << endl;
-
-	cout << "Reading sampleRate" << sizeof(sampleRate) << " bytes into address: " << offset << endl;
-	ifs.seekg(offset, ios::beg);
-	ifs.read( (char*) &sampleRate, sizeof(sampleRate) );
-	offset += sizeof(sampleRate);
-	cout << sampleRate << endl;
-
-	cout << "Reading byteRate" << sizeof(byteRate) << " bytes into address: " << offset << endl;
-	ifs.seekg(offset, ios::beg);
-	ifs.read( (char*) &byteRate, sizeof(byteRate) );
-	offset += sizeof(byteRate);
-	cout << byteRate << endl;
-
-	cout << "Reading blockAlign" << sizeof(blockAlign) << " bytes into address: " << offset << endl;
-	ifs.seekg(offset, ios::beg);
-	ifs.read( (char*) &blockAlign, sizeof(blockAlign) );
-	offset += sizeof(blockAlign);
-	cout << blockAlign << endl;
-
-	cout << "Reading bitsPerSample" << sizeof(bitsPerSample) << " bytes into address: " << offset << endl;
-	ifs.seekg(offset, ios::beg);
-	ifs.read( (char*) &bitsPerSample, sizeof(bitsPerSample) );
-	offset += sizeof(bitsPerSample);
-	cout << bitsPerSample << endl;
-
+	readIntChunk(ifs, offset, subchunk1Size);
+	readShortChunk(ifs, offset, audioFormat);
+	readShortChunk(ifs, offset, numChannels);
+	readIntChunk(ifs, offset, sampleRate);
+	readIntChunk(ifs, offset, byteRate);
+	readShortChunk(ifs, offset, blockAlign);
+	readShortChunk(ifs, offset, bitsPerSample);
 	offset += sizeof(subchunk2ID);
+	readIntChunk(ifs, offset, subchunk2Size);
 
-	cout << "Reading subchunk2Size" << sizeof(subchunk2Size) << " bytes into address: " << offset << endl;
-	ifs.seekg(offset, ios::beg);
-	ifs.read( (char*) &subchunk2Size, sizeof(subchunk2Size) );
-	offset += sizeof(subchunk2Size);
-	cout << subchunk2Size << endl;
-
+	/* Read Data */
 	char* rawData = new char[subchunk2Size];
 	ifs.seekg(offset, ios::beg);
 	ifs.read(rawData, subchunk2Size);
@@ -97,8 +66,8 @@ void Wave::loadWave(char* loadPath)
 		data = new short[dataSize];
 
 		short sample;
-		min = 32767;
-		max = -32768;
+		min = data[0];
+		max = data[0];
 		for (int i = 0; i < subchunk2Size; i+=2) {
 			// TODO: Shift left 8 instead
 			sample = (short) ( (unsigned char) rawData[i] );
@@ -108,7 +77,7 @@ void Wave::loadWave(char* loadPath)
 
 			if (data[i/2] < min)
 				min = data[i/2];
-			else if (data[i/2] > max)
+			if (data[i/2] > max)
 				max = data[i/2];
 		}
 	}

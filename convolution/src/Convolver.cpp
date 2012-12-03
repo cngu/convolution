@@ -42,7 +42,6 @@ void Convolver::convolve(const unique_ptr<Wave>& dry, const unique_ptr<Wave>& ir
 {
 	// TODO: Combine these two loops
 	float *x = new float[dry->dataSize];
-	cout << "Dry Recording DataSize: " << dry->dataSize << endl;
 
 	// TODO: Move pow() out of loop, don't need to recalculate every iteration
 	// TODO: Replace pow with either adding every loop or bit shifting and adding
@@ -50,20 +49,17 @@ void Convolver::convolve(const unique_ptr<Wave>& dry, const unique_ptr<Wave>& ir
 	for (int i = 0; i < dry->dataSize; i++) {
 		x[i] = (float) dry->data[i] / pow(2.0, dry->bitsPerSample - 1);
 	}
-	cout << "Done normalizing dry recording" << endl;
 
-	cout << "IR DataSize: " << ir->dataSize << endl;
 	float *h = new float[ir->dataSize];
 	for (int i = 0; i < ir->dataSize; i++) {
 		h[i] = (float) ir->data[i] / pow(2.0, ir->bitsPerSample - 1);
 	}
-	cout << "Done normalizing impulse response" << endl;
 
 	float *yTemp = new float[P];
 	convolve(x, dry->dataSize, h, ir->dataSize, yTemp, P);
 
 	/* Find the lower and upper bounds of the convolved output*/
-	float oldMin = 1.0f, oldMax = -1.0f;
+	float oldMin = yTemp[0], oldMax = yTemp[0];
 	float *yTemp2 = new float[P];
 	for (int i = 0; i < P; i++) {
 		if (yTemp[i] < oldMin)
