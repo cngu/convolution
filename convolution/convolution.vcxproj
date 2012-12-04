@@ -91,12 +91,14 @@
     <ClCompile Include="src\Main.cpp" />
     <ClCompile Include="src\Snd.cpp" />
     <ClCompile Include="src\SoundFile.cpp" />
-    <ClCompile Include="src\TestConvolve.cpp" />
+    <ClCompile Include="src\TestConvolver.cpp" />
     <ClCompile Include="src\Wave.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="sounds\dry\testCase1.wav" />
+    <None Include="sounds\ir\mono\Parking Garage.wav" />
     <None Include="sounds\ir\mono\smallCave.wav" />
+    <None Include="sounds\ir\stereo\Parking Garage.wav" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

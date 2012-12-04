@@ -12,8 +12,9 @@ public:
 	void load(char* loadPath);
 
 	int getNumChannels();
-	int getDataSize();
+	int getSampleRate();
 	short getBitsPerSample();
+	int getDataSize();
 	short* getData();
 	
 };

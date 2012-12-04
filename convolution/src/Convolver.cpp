@@ -39,45 +39,88 @@ void Convolver::convolve(const float x[], int N, const float h[], int M, float y
 /* Written By Abbas Sarraf. Modified by Chris Nguyen. */
 void Convolver::convolve(SoundFile* dry, SoundFile* ir, short y[], int P)
 {
+	float *resultTemp = new float[P];
+
 	// TODO: Combine these two loops
-	float *x = new float[dry->getDataSize()];
+	// TODO: Replace 1.0 with 1.0f here and a further down
+	
 
 	// TODO: Move pow() out of loop, don't need to recalculate every iteration
 	// TODO: Replace pow with either adding every loop or bit shifting and adding
 	//TODO: Replace 2.0 with 2.0f
+	float *x = new float[dry->getDataSize()];
+	float inputSignalMax = dry->getData()[0];
 	for (int i = 0; i < dry->getDataSize(); i++) {
 		x[i] = (float) dry->getData()[i] / pow(2.0, dry->getBitsPerSample() - 1);
+
+		if (dry->getData()[i] > inputSignalMax)
+			inputSignalMax = dry->getData()[i];
 	}
 
-	float *h = new float[ir->getDataSize()];
-	for (int i = 0; i < ir->getDataSize(); i++) {
-		h[i] = (float) ir->getData()[i] / pow(2.0, ir->getBitsPerSample() - 1);
-	}
 
-	float *yTemp = new float[P];
-	convolve(x, dry->getDataSize(), h, ir->getDataSize(), yTemp, P);
+	if (ir->getNumChannels() == 1) {
+		float *h = new float[ir->getDataSize()];
+		for (int i = 0; i < ir->getDataSize(); i++) {
+			h[i] = (float) ir->getData()[i] / pow(2.0, ir->getBitsPerSample() - 1);
+		}
+
+		convolve(x, dry->getDataSize(), h, ir->getDataSize(), resultTemp, P);
+		delete[] h;
+	}
+	else {//if (ir->getNumChannels() == 2) {
+		// TODO: Calculate ir->getDataSize()/2 once, and use bitshift
+		/* Split stereo impulse response into left and right channels */
+		short* irLeft = new short[ir->getDataSize()/2];
+		short* irRight = new short[ir->getDataSize()/2];
+		ir->splitChannels(irLeft, irRight, ir->getDataSize()/2);
+
+		/* Normalize both left and right channels between -1 and 1 */
+		float* hLeft = new float[ir->getDataSize()/2];
+		float* hRight = new float[ir->getDataSize()/2];
+		for (int i = 0; i < ir->getDataSize()/2; i++) {
+			hLeft[i] = (float) irLeft[i] / pow(2.0, ir->getBitsPerSample() - 1);
+			hRight[i] = (float) irRight[i] / pow(2.0, ir->getBitsPerSample() - 1);
+		}
+		
+		/* Convolve mono dry recording with both left and right IR channels, separately */
+		float* resultTempLeft = new float[P/2];
+		float* resultTempRight = new float[P/2];
+		convolve(x, dry->getDataSize(), hLeft, ir->getDataSize()/2, resultTempLeft, P/2);
+		convolve(x, dry->getDataSize(), hRight, ir->getDataSize()/2, resultTempRight, P/2);
+		
+		/* Interleave the left and right convolutions */
+		ir->interleave(resultTempLeft, resultTempRight, P/2, resultTemp);
+
+		delete[] irLeft;
+		delete[] irRight;
+		delete[] hLeft;
+		delete[] hRight;
+		delete[] resultTempLeft;
+		delete[] resultTempRight;
+	}
 
 	/* Find the lower and upper bounds of the convolved output*/
-	float oldMin = yTemp[0], oldMax = yTemp[0];
-	float *yTemp2 = new float[P];
+	float oldMin = resultTemp[0], oldMax = resultTemp[0];
 	for (int i = 0; i < P; i++) {
-		if (yTemp[i] < oldMin)
-			oldMin = yTemp[i];
-		if (yTemp[i] > oldMax)
-			oldMax = yTemp[i];
+		if (resultTemp[i] < oldMin)
+			oldMin = resultTemp[i];
+		if (resultTemp[i] > oldMax)
+			oldMax = resultTemp[i];
 	}
 
 	/* Normalize bounds of convolved output back to between -1 and 1 */
 	// TODO: Replace 1.0 with 1.0f
 	// TODO: Merge below two loops
 	for (int i = 0; i < P; i++) {
-		yTemp[i] = normalize(yTemp[i], oldMin, oldMax, -1.0, 1.0);
+		resultTemp[i] = normalize(resultTemp[i], oldMin, oldMax, -1.0, 1.0);
 	}
 
 	for (int i = 0; i < P; i++)	{
-		// Output is fixed at 16 bits per sample as per assignment specifications
-		y[i] = symmetricalRound(yTemp[i] * (pow(2.0, 16-1) - 1));
+		y[i] = symmetricalRound(resultTemp[i] * inputSignalMax);//(pow(2.0, 16-1) - 1));
 	}
+
+	delete[] x;
+	delete[] resultTemp;
 }
 
 //  The four1 FFT from Numerical Recipes in C,

@@ -43,9 +43,6 @@
     <ClCompile Include="src\Main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\TestConvolve.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\Wave.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -61,12 +58,21 @@
     <ClCompile Include="src\Snd.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\TestConvolver.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="sounds\dry\testCase1.wav">
       <Filter>Resource Files</Filter>
     </None>
     <None Include="sounds\ir\mono\smallCave.wav">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="sounds\ir\mono\Parking Garage.wav">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="sounds\ir\stereo\Parking Garage.wav">
       <Filter>Resource Files</Filter>
     </None>
   </ItemGroup>

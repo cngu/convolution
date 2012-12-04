@@ -22,6 +22,11 @@ int Wave::getNumChannels()
 	return numChannels;
 }
 
+int Wave::getSampleRate()
+{
+	return sampleRate;
+}
+
 int Wave::getDataSize()
 {
 	return dataSize;
@@ -87,4 +92,76 @@ void Wave::load(char* loadPath)
 
 	ifs.close();
 	delete[] rawData;
+}
+
+/* Written By Leonard Manzara. Modified by Abbas Sarraf. */
+void Wave::saveHeader(FILE *outputFile, int channels, int numberSamples, int bitsPerSample, double sampleRate)
+{
+	/*  Calculate the total number of bytes for the data chunk  */
+	int dataChunkSize = channels * numberSamples * (bitsPerSample / 8);
+	
+	/*  Calculate the total number of bytes for the form size  */
+	int formSize = 36 + dataChunkSize;
+	
+	/*  Calculate the total number of bytes per frame  */
+	short int frameSize = channels * (bitsPerSample / 8);
+	
+	/*  Calculate the byte rate  */
+	int bytesPerSecond = (int)ceil(sampleRate * frameSize);
+	
+	/*  Write header to file  */
+	/*  Form container identifier  */
+	fputs("RIFF", outputFile);
+	
+	/*  Form size  */
+	SoundFile::fwriteIntLSB(formSize, outputFile);
+	
+	/*  Form container type  */
+	fputs("WAVE", outputFile);
+	
+	/*  Format chunk identifier (Note: space after 't' needed)  */
+	fputs("fmt ", outputFile);
+	
+	/*  Format chunk size (fixed at 16 bytes)  */
+	SoundFile::fwriteIntLSB(16, outputFile);
+	
+	/*  Compression code:  1 = PCM  */
+	SoundFile::fwriteShortLSB(1, outputFile);
+	
+	/*  Number of channels  */
+	SoundFile::fwriteShortLSB((short)channels, outputFile);
+	
+	/*  Output Sample Rate  */
+	SoundFile::fwriteIntLSB((int)sampleRate, outputFile);
+	
+	/*  Bytes per second  */
+	SoundFile::fwriteIntLSB(bytesPerSecond, outputFile);
+	
+	/*  Block alignment (frame size)  */
+	SoundFile::fwriteShortLSB(frameSize, outputFile);
+	
+	/*  Bits per sample  */
+	SoundFile::fwriteShortLSB(bitsPerSample, outputFile);
+	
+	/*  Sound Data chunk identifier  */
+	fputs("data", outputFile);
+	
+	/*  Chunk size  */
+	SoundFile::fwriteIntLSB(dataChunkSize, outputFile);
+}
+
+void Wave::saveData(FILE* outputFile, short data[], int len)
+{
+	for (int i = 0; i < len; i++) {
+		SoundFile::fwriteShortLSB(data[i], outputFile);
+	}
+}
+
+void Wave::save(char* outputFile, int channels, int numberSamples, int bitsPerSample, 
+				     double sampleRate, short data[], int dataLen) 
+{
+	FILE *outputWaveFile = fopen(outputFile, "wb");
+	saveHeader(outputWaveFile, channels, numberSamples, bitsPerSample, sampleRate);
+	saveData(outputWaveFile, data, dataLen);
+	fclose(outputWaveFile);
 }

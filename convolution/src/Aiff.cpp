@@ -17,6 +17,11 @@ int Aiff::getNumChannels()
 	return -1;
 }
 
+int Aiff::getSampleRate()
+{
+	return -1;
+}
+
 int Aiff::getDataSize()
 {
 	return -1;

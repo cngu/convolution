@@ -17,6 +17,11 @@ int Snd::getNumChannels()
 	return -1;
 }
 
+int Snd::getSampleRate()
+{
+	return -1;
+}
+
 int Snd::getDataSize()
 {
 	return -1;

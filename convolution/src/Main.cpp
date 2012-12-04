@@ -10,11 +10,8 @@
 #include "gtest\gtest.h"
 
 // Control directives
-#define FFT		// Uncomment to use Frequency-Domain Convolution rather than Time Domain
+//#define FFT		// Uncomment to use Frequency-Domain Convolution rather than Time Domain
 //#define TESTS		// Uncomment to run tests
-
-#define BITS_PER_SAMPLE 16
-#define SAMPLE_RATE 44100
 
 using namespace std;
 
@@ -48,101 +45,6 @@ bool checkArgs(int argc, char* argv[])
 	return true;
 }
 
-/* Written By Leonard Manzara */
-size_t fwriteIntLSB(int data, FILE *stream)
-{
-	unsigned char array[4];
-
-    array[3] = (unsigned char)((data >> 24) & 0xFF);
-    array[2] = (unsigned char)((data >> 16) & 0xFF);
-    array[1] = (unsigned char)((data >> 8) & 0xFF);
-    array[0] = (unsigned char)(data & 0xFF);
-    return fwrite(array, sizeof(unsigned char), 4, stream);
-}
-
-/* Written By Leonard Manzara */
-size_t fwriteShortLSB(short int data, FILE *stream)
-{
-	unsigned char array[2];
-
-    array[1] = (unsigned char)((data >> 8) & 0xFF);
-    array[0] = (unsigned char)(data & 0xFF);
-    return fwrite(array, sizeof(unsigned char), 2, stream);
-}
-
-/* Written By Leonard Manzara. Modified by Abbas Sarraf. */
-void writeWaveFileHeader(int channels, int numberSamples, int bitsPerSample, 
-					     double sampleRate, FILE *outputFile)
-{
-	/*  Calculate the total number of bytes for the data chunk  */
-	int dataChunkSize = channels * numberSamples * (bitsPerSample / 8);
-	
-	/*  Calculate the total number of bytes for the form size  */
-	int formSize = 36 + dataChunkSize;
-	
-	/*  Calculate the total number of bytes per frame  */
-	short int frameSize = channels * (bitsPerSample / 8);
-	
-	/*  Calculate the byte rate  */
-	int bytesPerSecond = (int)ceil(sampleRate * frameSize);
-	
-	/*  Write header to file  */
-	/*  Form container identifier  */
-	fputs("RIFF", outputFile);
-	
-	/*  Form size  */
-	fwriteIntLSB(formSize, outputFile);
-	
-	/*  Form container type  */
-	fputs("WAVE", outputFile);
-	
-	/*  Format chunk identifier (Note: space after 't' needed)  */
-	fputs("fmt ", outputFile);
-	
-	/*  Format chunk size (fixed at 16 bytes)  */
-	fwriteIntLSB(16, outputFile);
-	
-	/*  Compression code:  1 = PCM  */
-	fwriteShortLSB(1, outputFile);
-	
-	/*  Number of channels  */
-	fwriteShortLSB((short)channels, outputFile);
-	
-	/*  Output Sample Rate  */
-	fwriteIntLSB((int)sampleRate, outputFile);
-	
-	/*  Bytes per second  */
-	fwriteIntLSB(bytesPerSecond, outputFile);
-	
-	/*  Block alignment (frame size)  */
-	fwriteShortLSB(frameSize, outputFile);
-	
-	/*  Bits per sample  */
-	fwriteShortLSB(bitsPerSample, outputFile);
-	
-	/*  Sound Data chunk identifier  */
-	fputs("data", outputFile);
-	
-	/*  Chunk size  */
-	fwriteIntLSB(dataChunkSize, outputFile);
-}
-
-void writeWaveFileData(short data[], int len, FILE* outputFile)
-{
-	for (int i = 0; i < len; i++) {
-		fwriteShortLSB(data[i], outputFile);
-	}
-}
-
-void saveWaveFile(char* outputFile, int channels, int numberSamples, int bitsPerSample, 
-				  double sampleRate, short data[], int dataLen) 
-{
-	FILE *outputWaveFile = fopen(outputFile, "wb");
-	writeWaveFileHeader(channels, numberSamples, bitsPerSample, sampleRate, outputWaveFile);
-	writeWaveFileData(data, dataLen, outputWaveFile);
-	fclose(outputWaveFile);
-}
-
 int main(int argc, char* argv[])
 {
 #ifdef TESTS
@@ -170,35 +72,108 @@ int main(int argc, char* argv[])
 
 	/* Store result of convolution */
 	short* result;
+	int numSamples;
 
 #ifndef FFT
 	/* Perform Time-Domain Convolution */
-	int resultSize = dryRecording->getDataSize() + impulseResponse->getDataSize() - 1;
+	int resultSize;
+	if (impulseResponse->getNumChannels() == 1) {
+		resultSize = dryRecording->getDataSize() + impulseResponse->getDataSize() - 1;
+		numSamples = resultSize;
+	}
+	else {
+		resultSize = (dryRecording->getDataSize() + impulseResponse->getDataSize()/2 - 1)*2;
+		numSamples = resultSize/2;
+	}
+
 	result = new short[resultSize];
+
 	Convolver::convolve(dryRecording, impulseResponse, result, resultSize);
 
 	/* Save resulting .wav file */
-	saveWaveFile(argv[3], impulseResponse->getNumChannels(), resultSize, BITS_PER_SAMPLE, 
-					SAMPLE_RATE, result, resultSize);
+	cout << "Impulse Response num channels: " << impulseResponse->getNumChannels() << endl;
+	cout << "Number of samples: " << resultSize << endl;
+	Wave::save(argv[3], impulseResponse->getNumChannels(), numSamples, dryRecording->getBitsPerSample(), 
+					dryRecording->getSampleRate(), result, resultSize);
 #else
 	/* Perform FFT Convolution */
 	int structuredSize = 1;
-	while ( structuredSize < dryRecording->getDataSize() || structuredSize < impulseResponse->getDataSize() )
-		structuredSize *= 2;	// TODO: Replace with bit shift
+	double *R;
 
-	double *F = new double[structuredSize * 2];
-	double *G = new double[structuredSize * 2];
-	double *R = new double[structuredSize * 2];
+	if (impulseResponse->getNumChannels() == 1) {
+		while ( structuredSize < dryRecording->getDataSize() || structuredSize < impulseResponse->getDataSize() )
+			structuredSize *= 2;	// TODO: Replace with bit shift
 
-	/* Transform Time-Domain to Frequency-Domain */
-	Convolver::timeDomainToFreqDomain(dryRecording->getData(), dryRecording->getDataSize(), F, structuredSize);
-	Convolver::timeDomainToFreqDomain(impulseResponse->getData(), impulseResponse->getDataSize(), G, structuredSize);
+		numSamples = structuredSize;
 
-	/* Perform Frequency-Domain Convolution */
-	Convolver::fftConvolve(F, G, R, structuredSize);
+		double *F = new double[structuredSize * 2];
+		double *G = new double[structuredSize * 2];
+		R = new double[structuredSize * 2];
 
-	/* Convert Frequency-Domain back to Time-Domain */
-	Convolver::four1(R-1, structuredSize, -1);
+		/* Transform Time-Domain to Frequency-Domain */
+		Convolver::timeDomainToFreqDomain(dryRecording->getData(), dryRecording->getDataSize(), F, structuredSize);
+		Convolver::timeDomainToFreqDomain(impulseResponse->getData(), impulseResponse->getDataSize(), G, structuredSize);
+
+		/* Perform Frequency-Domain Convolution */
+		Convolver::fftConvolve(F, G, R, structuredSize);
+
+		/* Convert Frequency-Domain back to Time-Domain */
+		Convolver::four1(R-1, structuredSize, -1);
+
+		delete[] F;
+		delete[] G;
+	}
+	else {
+		/* Split stereo impulse response into left and right channels */
+		short* irLeft = new short[impulseResponse->getDataSize()/2];
+		short* irRight = new short[impulseResponse->getDataSize()/2];
+		impulseResponse->splitChannels(irLeft, irRight, impulseResponse->getDataSize()/2);
+
+		while ( structuredSize < dryRecording->getDataSize() || structuredSize < impulseResponse->getDataSize()/2 )
+			structuredSize *= 2;	// TODO: Replace with bit shift
+
+		double *F = new double[structuredSize * 2];
+		double *G = new double[structuredSize * 2];
+		double *RLeft = new double[structuredSize * 2];
+		double *RRight = new double[structuredSize * 2];
+
+		/* Transform Time-Domain to Frequency-Domain and FFT Convolve Left Channel */
+		Convolver::timeDomainToFreqDomain(dryRecording->getData(), dryRecording->getDataSize(), F, structuredSize);
+		Convolver::timeDomainToFreqDomain(irLeft, impulseResponse->getDataSize()/2, G, structuredSize);
+		Convolver::fftConvolve(F, G, RLeft, structuredSize);
+
+		/* Transform Time-Domain to Frequency-Domain and FFT Convolve Right Channel */
+		Convolver::timeDomainToFreqDomain(irRight, impulseResponse->getDataSize()/2, G, structuredSize);
+		Convolver::fftConvolve(F, G, RRight, structuredSize);
+
+		delete[] irLeft;
+		delete[] irRight;
+		delete[] F;
+		delete[] G;
+
+		/* Convert Frequency-Domain back to Time-Domain */
+		Convolver::four1(RLeft-1, structuredSize, -1);
+		Convolver::four1(RRight-1, structuredSize, -1);
+
+		/* Interleave left and right channel data */
+		R = new double[structuredSize*4];
+		impulseResponse->interleaveComplex(RLeft, RRight, structuredSize*2, R);
+
+		/* Shuffle all real data to the left half */
+		/*for (int i = 0; i < structuredSize; i++) {
+			RLeft[i] = RLeft[i*2];
+			RRight[i] = RRight[i*2];
+		}
+		*/
+
+		/* Twice as many data values since there are two channels, to times two to be consistent
+		   with the case where there is only one channel. */
+		numSamples = structuredSize;
+		structuredSize *= 2;
+
+		delete[] RLeft;
+		delete[] RRight;
+	}
 
 	/* Divide everything by N and find min/max */
 	double min = R[0]/structuredSize, max = R[0]/structuredSize;
@@ -216,11 +191,9 @@ int main(int argc, char* argv[])
 		result[i/2] = Convolver::normalize(R[i], min, max, -32768, 32767);
 
 	/* Save resulting .wav file */
-	saveWaveFile(argv[3], impulseResponse->getNumChannels(), structuredSize, BITS_PER_SAMPLE, 
-					SAMPLE_RATE, result, structuredSize);
+	Wave::save(argv[3], impulseResponse->getNumChannels(), numSamples, dryRecording->getBitsPerSample(), 
+					dryRecording->getSampleRate(), result, structuredSize);
 
-	delete[] F;
-	delete[] G;
 	delete[] R;
 #endif
 	

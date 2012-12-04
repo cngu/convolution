@@ -28,14 +28,22 @@ public:
 	Wave(char* wavePath);
 	~Wave();
 
-	void load(char* loadPath);
-
 	int getNumChannels();
-	int getDataSize();
+	int getSampleRate();
 	short getBitsPerSample();
+	int getDataSize();
 	short* getData();
 
+	void load(char* loadPath);
+	static void save(char* outputFile, int channels, int numberSamples, int bitsPerSample, 
+				     double sampleRate, short data[], int dataLen);
 	
+	void splitChannels(short* left, short* right, int len);
+
+private:
+	static void saveHeader(FILE *outputFile, int channels, int numberSamples, int bitsPerSample, 
+					       double sampleRate);
+	static void saveData(FILE* outputFile, short data[], int len);
 
 
 
