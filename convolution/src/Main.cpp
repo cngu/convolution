@@ -1,16 +1,17 @@
-#include <algorithm>
 #include <iostream>
 #include <string>
+
+#include "RegressionTest.h"
+#include "TestConvolver.h"
 
 #include "Convolver.h"
 #include "SoundFile.h"
 #include "Wave.h"
 #include "Snd.h"
 #include "Aiff.h"
-#include "gtest\gtest.h"
 
 // Control directives
-//#define FFT		// Uncomment to use Frequency-Domain Convolution rather than Time Domain
+#define FFT		// Uncomment to use Frequency-Domain Convolution rather than Time Domain
 //#define TESTS		// Uncomment to run tests
 
 using namespace std;
@@ -48,12 +49,10 @@ bool checkArgs(int argc, char* argv[])
 int main(int argc, char* argv[])
 {
 #ifdef TESTS
-	/* Run tests */
-	::testing::InitGoogleTest(&argc, argv);
-	RUN_ALL_TESTS();
-	return 0;
+	RegressionTest::runAllTests();
+	TestConvolver::runAllTests();
 #endif
-
+		
 	/* Ensure dry, IR, and output file names are provided */
 	if (! checkArgs(argc, argv))
 		return 1;
@@ -63,8 +62,6 @@ int main(int argc, char* argv[])
 	SoundFile* impulseResponse = SoundFile::create(argv[2]);
 
 	/* End program if any input file is corrupted or nonexistant */
-	// TODO: do this check in between createWave's above. If first 
-	// is corrupted, no point in creating Wave objects for the rest
 	if (dryRecording == nullptr || impulseResponse == nullptr)
 		return 1;
 
@@ -100,28 +97,36 @@ int main(int argc, char* argv[])
 	int structuredSize = 1;
 	double *R;
 
+	/* Normalize the input signal to -1 and +1 */
+	double* dryNormalized = new double[dryRecording->getDataSize()];
+	double* irNormalized = new double[impulseResponse->getDataSize()];
+	for (int i = 0; i < dryRecording->getDataSize(); i++) 
+		dryNormalized[i] = (double) dryRecording->getData()[i]/32768;
+	for (int i = 0; i < impulseResponse->getDataSize(); i++)
+		irNormalized[i] = (double) impulseResponse->getData()[i]/32768;
+
 	if (impulseResponse->getNumChannels() == 1) {
 		while ( structuredSize < dryRecording->getDataSize() || structuredSize < impulseResponse->getDataSize() )
 			structuredSize *= 2;	// TODO: Replace with bit shift
 
 		numSamples = structuredSize;
 
-		double *F = new double[structuredSize * 2];
-		double *G = new double[structuredSize * 2];
+		/* Zero-pad normalized signals and convert to Frequency Domain */		
+		double *X = new double[structuredSize * 2];
+		double *H = new double[structuredSize * 2];
 		R = new double[structuredSize * 2];
 
-		/* Transform Time-Domain to Frequency-Domain */
-		Convolver::timeDomainToFreqDomain(dryRecording->getData(), dryRecording->getDataSize(), F, structuredSize);
-		Convolver::timeDomainToFreqDomain(impulseResponse->getData(), impulseResponse->getDataSize(), G, structuredSize);
+		Convolver::zeroPadAndTimeToFreqDomain(dryNormalized, dryRecording->getDataSize(), X, structuredSize);
+		Convolver::zeroPadAndTimeToFreqDomain(irNormalized, impulseResponse->getDataSize(), H, structuredSize);
 
 		/* Perform Frequency-Domain Convolution */
-		Convolver::fftConvolve(F, G, R, structuredSize);
+		Convolver::fftConvolve(X, H, R, structuredSize);
 
 		/* Convert Frequency-Domain back to Time-Domain */
 		Convolver::four1(R-1, structuredSize, -1);
 
-		delete[] F;
-		delete[] G;
+		delete[] X;
+		delete[] H;
 	}
 	else {
 		/* Split stereo impulse response into left and right channels */
@@ -129,27 +134,35 @@ int main(int argc, char* argv[])
 		short* irRight = new short[impulseResponse->getDataSize()/2];
 		impulseResponse->splitChannels(irLeft, irRight, impulseResponse->getDataSize()/2);
 
+		/* Normalize both left and right channels of IR */
+		double* irLeftNormalized = new double[impulseResponse->getDataSize()/2];
+		double* irRightNormalized = new double[impulseResponse->getDataSize()/2];
+		for (int i = 0; i < impulseResponse->getDataSize()/2; i++) 
+			irLeftNormalized[i] = (double) irLeft[i]/32768;
+		for (int i = 0; i < impulseResponse->getDataSize()/2; i++)
+			irRightNormalized[i] = (double) irRight[i]/32768;
+
 		while ( structuredSize < dryRecording->getDataSize() || structuredSize < impulseResponse->getDataSize()/2 )
 			structuredSize *= 2;	// TODO: Replace with bit shift
 
-		double *F = new double[structuredSize * 2];
-		double *G = new double[structuredSize * 2];
-		double *RLeft = new double[structuredSize * 2];
-		double *RRight = new double[structuredSize * 2];
+		double* X = new double[structuredSize * 2];
+		double* H = new double[structuredSize * 2];
+		double* RLeft = new double[structuredSize * 2];
+		double* RRight = new double[structuredSize * 2];
 
 		/* Transform Time-Domain to Frequency-Domain and FFT Convolve Left Channel */
-		Convolver::timeDomainToFreqDomain(dryRecording->getData(), dryRecording->getDataSize(), F, structuredSize);
-		Convolver::timeDomainToFreqDomain(irLeft, impulseResponse->getDataSize()/2, G, structuredSize);
-		Convolver::fftConvolve(F, G, RLeft, structuredSize);
+		Convolver::zeroPadAndTimeToFreqDomain(dryNormalized, dryRecording->getDataSize(), X, structuredSize);
+		Convolver::zeroPadAndTimeToFreqDomain(irLeftNormalized, impulseResponse->getDataSize()/2, H, structuredSize);
+		Convolver::fftConvolve(X, H, RLeft, structuredSize);
 
 		/* Transform Time-Domain to Frequency-Domain and FFT Convolve Right Channel */
-		Convolver::timeDomainToFreqDomain(irRight, impulseResponse->getDataSize()/2, G, structuredSize);
-		Convolver::fftConvolve(F, G, RRight, structuredSize);
+		Convolver::zeroPadAndTimeToFreqDomain(irRightNormalized, impulseResponse->getDataSize()/2, H, structuredSize);
+		Convolver::fftConvolve(X, H, RRight, structuredSize);
 
 		delete[] irLeft;
 		delete[] irRight;
-		delete[] F;
-		delete[] G;
+		delete[] X;
+		delete[] H;
 
 		/* Convert Frequency-Domain back to Time-Domain */
 		Convolver::four1(RLeft-1, structuredSize, -1);
@@ -158,13 +171,6 @@ int main(int argc, char* argv[])
 		/* Interleave left and right channel data */
 		R = new double[structuredSize*4];
 		impulseResponse->interleaveComplex(RLeft, RRight, structuredSize*2, R);
-
-		/* Shuffle all real data to the left half */
-		/*for (int i = 0; i < structuredSize; i++) {
-			RLeft[i] = RLeft[i*2];
-			RRight[i] = RRight[i*2];
-		}
-		*/
 
 		/* Twice as many data values since there are two channels, to times two to be consistent
 		   with the case where there is only one channel. */
@@ -176,19 +182,31 @@ int main(int argc, char* argv[])
 	}
 
 	/* Divide everything by N and find min/max */
-	double min = R[0]/structuredSize, max = R[0]/structuredSize;
-	for (int i = 0; i < structuredSize*2; i+=2) {
-		R[i] /= structuredSize;
+	double min = R[0]/(double)(structuredSize*2), 
+		   max = R[0]/(double)(structuredSize*2);
+
+	for (int i = 0; i < structuredSize*2; i++) {
+		R[i] /= (structuredSize*2);
+
 		if (R[i] < min)
 			min = R[i];
 		if (R[i] > max)
 			max = R[i];
 	}
 
-	/* Normalize result to be between -32768 and 32767 */
+	for (int i = 0; i < structuredSize*2; i++) {
+		R[i] = Convolver::normalize(R[i], min, max, -1.0, 1.0);
+	}
+
+	/* Scale result back up to short */
 	result = new short[structuredSize];
 	for (int i = 0; i < structuredSize*2; i+=2)
-		result[i/2] = Convolver::normalize(R[i], min, max, -32768, 32767);
+		result[i/2] = Convolver::symmetricalRound(R[i]*32767.0);//Convolver::normalize(R[i], min, max, inputSignalMin, inputSignalMax);
+
+	cout << structuredSize << " " << numSamples << " " << dryRecording->getDataSize() << endl;
+	cout << "P: ask Manzara " << dryRecording->getDataSize() + impulseResponse->getDataSize() - 1 << endl;
+	cout << R[0] << R[0]*32767<< endl;
+	system("pause");
 
 	/* Save resulting .wav file */
 	Wave::save(argv[3], impulseResponse->getNumChannels(), numSamples, dryRecording->getBitsPerSample(), 

@@ -77,7 +77,7 @@ void SoundFile::splitChannels(short* left, short* right, int len)
 	}
 }
 
-void SoundFile::interleave(float* left, float* right, int len, float* output)
+void SoundFile::interleave(double* left, double* right, int len, double* output)
 {
 	for (int i = 0; i < len; i++) {
 		output[i*2] = left[i];

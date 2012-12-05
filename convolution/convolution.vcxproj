@@ -78,8 +78,11 @@
     <ClInclude Include="resource.h" />
     <ClInclude Include="src\Aiff.h" />
     <ClInclude Include="src\Convolver.h" />
+    <ClInclude Include="src\RegressionTest.h" />
     <ClInclude Include="src\Snd.h" />
     <ClInclude Include="src\SoundFile.h" />
+    <ClInclude Include="src\Test.h" />
+    <ClInclude Include="src\TestConvolver.h" />
     <ClInclude Include="src\Wave.h" />
   </ItemGroup>
   <ItemGroup>
@@ -89,15 +92,23 @@
     <ClCompile Include="src\Aiff.cpp" />
     <ClCompile Include="src\Convolver.cpp" />
     <ClCompile Include="src\Main.cpp" />
+    <ClCompile Include="src\RegressionTest.cpp" />
     <ClCompile Include="src\Snd.cpp" />
     <ClCompile Include="src\SoundFile.cpp" />
+    <ClCompile Include="src\Test.cpp" />
     <ClCompile Include="src\TestConvolver.cpp" />
     <ClCompile Include="src\Wave.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="sounds\dry\testCase1.aiff" />
+    <None Include="sounds\dry\testCase1.snd" />
     <None Include="sounds\dry\testCase1.wav" />
+    <None Include="sounds\ir\mono\Parking Garage.aiff" />
+    <None Include="sounds\ir\mono\Parking Garage.snd" />
     <None Include="sounds\ir\mono\Parking Garage.wav" />
     <None Include="sounds\ir\mono\smallCave.wav" />
+    <None Include="sounds\ir\stereo\Parking Garage.aiff" />
+    <None Include="sounds\ir\stereo\Parking Garage.snd" />
     <None Include="sounds\ir\stereo\Parking Garage.wav" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

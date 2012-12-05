@@ -11,7 +11,7 @@ public:
 	virtual void load(char* loadPath) = 0;
 
 	void splitChannels(short* left, short* right, int len);
-	void interleave(float* left, float* right, int len, float* output);
+	void interleave(double* left, double* right, int len, double* output);
 	void interleaveComplex(double* left, double* right, int len, double* output);
 
 	virtual int getNumChannels() = 0;

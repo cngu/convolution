@@ -33,6 +33,15 @@
     <ClInclude Include="src\SoundFile.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\Test.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\RegressionTest.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\TestConvolver.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="convolution.rc">
@@ -61,6 +70,12 @@
     <ClCompile Include="src\TestConvolver.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\Test.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\RegressionTest.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="sounds\dry\testCase1.wav">
@@ -73,6 +88,24 @@
       <Filter>Resource Files</Filter>
     </None>
     <None Include="sounds\ir\stereo\Parking Garage.wav">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="sounds\ir\stereo\Parking Garage.aiff">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="sounds\ir\stereo\Parking Garage.snd">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="sounds\ir\mono\Parking Garage.aiff">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="sounds\ir\mono\Parking Garage.snd">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="sounds\dry\testCase1.aiff">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="sounds\dry\testCase1.snd">
       <Filter>Resource Files</Filter>
     </None>
   </ItemGroup>

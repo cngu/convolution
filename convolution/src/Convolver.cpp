@@ -10,7 +10,7 @@
 using namespace std;
 
 /* Written By Leonard Manzara. Modified by Chris Nguyen. */
-void Convolver::convolve(const float x[], int N, const float h[], int M, float y[], int P)
+void Convolver::convolve(const double x[], int N, const double h[], int M, double y[], int P)
 {
 	int n, m;
 
@@ -31,27 +31,23 @@ void Convolver::convolve(const float x[], int N, const float h[], int M, float y
 	for (n = 0; n < N; n++) {
 		/*  Inner loop:  process x[n] with each sample of h[]  */
 		for (m = 0; m < M; m++) {
-			y[n+m] += (float) (x[n] * h[m]);	
+			y[n+m] += (double) (x[n] * h[m]);	
 		}
 	}
 }
 
-/* Written By Abbas Sarraf. Modified by Chris Nguyen. */
 void Convolver::convolve(SoundFile* dry, SoundFile* ir, short y[], int P)
 {
-	float *resultTemp = new float[P];
+	double *resultTemp = new double[P];
 
-	// TODO: Combine these two loops
-	// TODO: Replace 1.0 with 1.0f here and a further down
-	
+	// TODO: Combine these two loops	
 
 	// TODO: Move pow() out of loop, don't need to recalculate every iteration
 	// TODO: Replace pow with either adding every loop or bit shifting and adding
-	//TODO: Replace 2.0 with 2.0f
-	float *x = new float[dry->getDataSize()];
-	float inputSignalMax = dry->getData()[0];
+	double *x = new double[dry->getDataSize()];
+	short inputSignalMax = dry->getData()[0];
 	for (int i = 0; i < dry->getDataSize(); i++) {
-		x[i] = (float) dry->getData()[i] / pow(2.0, dry->getBitsPerSample() - 1);
+		x[i] = (double) dry->getData()[i] / 32768;
 
 		if (dry->getData()[i] > inputSignalMax)
 			inputSignalMax = dry->getData()[i];
@@ -59,9 +55,9 @@ void Convolver::convolve(SoundFile* dry, SoundFile* ir, short y[], int P)
 
 
 	if (ir->getNumChannels() == 1) {
-		float *h = new float[ir->getDataSize()];
+		double *h = new double[ir->getDataSize()];
 		for (int i = 0; i < ir->getDataSize(); i++) {
-			h[i] = (float) ir->getData()[i] / pow(2.0, ir->getBitsPerSample() - 1);
+			h[i] = (double) ir->getData()[i] / 32768;
 		}
 
 		convolve(x, dry->getDataSize(), h, ir->getDataSize(), resultTemp, P);
@@ -75,16 +71,16 @@ void Convolver::convolve(SoundFile* dry, SoundFile* ir, short y[], int P)
 		ir->splitChannels(irLeft, irRight, ir->getDataSize()/2);
 
 		/* Normalize both left and right channels between -1 and 1 */
-		float* hLeft = new float[ir->getDataSize()/2];
-		float* hRight = new float[ir->getDataSize()/2];
+		double* hLeft = new double[ir->getDataSize()/2];
+		double* hRight = new double[ir->getDataSize()/2];
 		for (int i = 0; i < ir->getDataSize()/2; i++) {
-			hLeft[i] = (float) irLeft[i] / pow(2.0, ir->getBitsPerSample() - 1);
-			hRight[i] = (float) irRight[i] / pow(2.0, ir->getBitsPerSample() - 1);
+			hLeft[i] = (double) irLeft[i] / pow(2.0, ir->getBitsPerSample() - 1);
+			hRight[i] = (double) irRight[i] / pow(2.0, ir->getBitsPerSample() - 1);
 		}
 		
 		/* Convolve mono dry recording with both left and right IR channels, separately */
-		float* resultTempLeft = new float[P/2];
-		float* resultTempRight = new float[P/2];
+		double* resultTempLeft = new double[P/2];
+		double* resultTempRight = new double[P/2];
 		convolve(x, dry->getDataSize(), hLeft, ir->getDataSize()/2, resultTempLeft, P/2);
 		convolve(x, dry->getDataSize(), hRight, ir->getDataSize()/2, resultTempRight, P/2);
 		
@@ -100,7 +96,7 @@ void Convolver::convolve(SoundFile* dry, SoundFile* ir, short y[], int P)
 	}
 
 	/* Find the lower and upper bounds of the convolved output*/
-	float oldMin = resultTemp[0], oldMax = resultTemp[0];
+	double oldMin = resultTemp[0], oldMax = resultTemp[0];
 	for (int i = 0; i < P; i++) {
 		if (resultTemp[i] < oldMin)
 			oldMin = resultTemp[i];
@@ -109,14 +105,13 @@ void Convolver::convolve(SoundFile* dry, SoundFile* ir, short y[], int P)
 	}
 
 	/* Normalize bounds of convolved output back to between -1 and 1 */
-	// TODO: Replace 1.0 with 1.0f
 	// TODO: Merge below two loops
 	for (int i = 0; i < P; i++) {
 		resultTemp[i] = normalize(resultTemp[i], oldMin, oldMax, -1.0, 1.0);
 	}
-
+	
 	for (int i = 0; i < P; i++)	{
-		y[i] = symmetricalRound(resultTemp[i] * inputSignalMax);//(pow(2.0, 16-1) - 1));
+		y[i] = symmetricalRound(resultTemp[i] * 32767);//inputSignalMax);//(pow(2.0, 16-1) - 1));
 	}
 
 	delete[] x;
@@ -125,7 +120,7 @@ void Convolver::convolve(SoundFile* dry, SoundFile* ir, short y[], int P)
 
 //  The four1 FFT from Numerical Recipes in C,
 //  p. 507 - 508.
-//  Note:  changed float data types to double.
+//  Note:  changed double data types to double.
 //  nn must be a power of 2, and use +1 for
 //  isign for an FFT, and -1 for the Inverse FFT.
 //  The data is complex, so the array size must be
@@ -181,56 +176,39 @@ void Convolver::four1(double data[], int nn, int isign)
     }
 }
 
-// Written by Abbas Sarraf.
-// signal: your actual data
-// signaleStructured will be set after this function is called
-void Convolver::timeDomainToFreqDomain(short *signal, int signalSize, double *signaleStructured, int structuredSize)
+void Convolver::zeroPadAndTimeToFreqDomain(double *timeDomain, int timeDomainLen, double *outputFreqDomain, int structuredSize)
 {		
-	
-	int i;
-	for ( i = 0; i < signalSize; i++ )
-	{
-		signaleStructured[i*2] 		= signal[i]; 	// the real part
-		signaleStructured[i*2+1]	= 0;				// the img part
+	int i = 0;
+	for (; i < timeDomainLen; i++ )	{
+		outputFreqDomain[i*2] = timeDomain[i];
+		outputFreqDomain[i*2+1] = 0;
 	}
-	
-	for (; i < structuredSize; i++ ) // this was a bug in the previous code, now it is fixed
-	{
-		signaleStructured[2*i] = 0;
-		signaleStructured[2*i+1] = 0;
+	for (; i < structuredSize; i++ ) {
+		outputFreqDomain[i*2] = 0;
+		outputFreqDomain[i*2+1] = 0;
 	}
-	
-	four1(signaleStructured-1, structuredSize, 1);
-	
+	four1(outputFreqDomain-1, structuredSize, 1);
 }
 
-// Written by Abbas Sarraf.
-// size indicates how many complex numbers we have in f, g, and r
-// i.e size = actual size of f divided by 2
-void Convolver::fftConvolve( double *f, double *g, double *r, int size )
+void Convolver::fftConvolve(double *x, double *h, double *r, int size)
 {
-	for ( int i = 0; i < size * 2; i+=2 )
-	{
-		// do the complex number multiplication
-		// for more on complex numbers visit http://www.clarku.edu/~djoyce/complex/mult.html
-		float real	= f[i] * g[i] - f[i+1] * g[i+1];
-		float img	= f[i] * g[i+1] + f[i+1] * g[i];
-		r[i] 		= real;
-		r[i+1] 		= img;
+	for (int i = 0; i < size*2; i+=2) {
+		r[i] = x[i] * h[i] - x[i+1] * h[i+1];
+		r[i+1] = x[i] * h[i+1] + x[i+1] * h[i];
 	}
 }
 
 // TODO: Write in assembly or macro it
-short Convolver::symmetricalRound(float value)
+short Convolver::symmetricalRound(double value)
 {
-	if (value >= 0.0f)
+	if (value >= 0.0)
 		return (short) floor(value + 0.5f);
 	else
 		return (short) ceil(value - 0.5f);
 }
 
 //TODO: Don't need to recalculate all that stuff. Only need to calculate in-fromMin. pass in the rest
-float Convolver::normalize(float in, float fromMin, float fromMax, float toMin, float toMax)
+double Convolver::normalize(double in, double fromMin, double fromMax, double toMin, double toMax)
 {
 	return ( (toMax-toMin) * (in-fromMin) / (fromMax-fromMin) ) + toMin;
 }

@@ -1,4 +1,7 @@
-﻿  Main.cpp
+﻿  TestConvolver.cpp
+  Test.cpp
+  RegressionTest.cpp
+  Main.cpp
+  Generating Code...
 Aiff.obj : warning LNK4075: ignoring '/EDITANDCONTINUE' due to '/OPT:REF' specification
-gtestd.lib(gtest-all.obj) : warning LNK4099: PDB 'vc100.pdb' was not found with 'gtestd.lib(gtest-all.obj)' or at 'C:\Users\Chris\Desktop\UNI\CPSC501\A4\Chris.Nguyen.501.A4\convolution\Debug\vc100.pdb'; linking object as if no debug info
   convolution.vcxproj -> C:\Users\Chris\Desktop\UNI\CPSC501\A4\Chris.Nguyen.501.A4\convolution\Debug\convolution.exe
