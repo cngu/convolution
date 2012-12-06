@@ -17,6 +17,9 @@ public:
 	static void fftConvolve_SmallSize();
 	static void fftConvolve_Test();
 	static void normalize_Test();
+	static void dataToSignal_Test();
+	static void signalToData_Test();
+	static void complexSignalToData_Test();
 	static void symmetricalRound_Test();
 	static void runAllTests();
 };

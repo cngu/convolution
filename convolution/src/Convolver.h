@@ -15,6 +15,9 @@ public:
 	static void zeroPadAndTimeToFreqDomain(double *timeDomain, int timeDomainLen, double *outputFreqDomain, int structuredSize);
 	static void fftConvolve(double *x, double *h, double *r, int size);
 	
+	static void dataToSignal(const short* data, int len, int min, double* signal);
+	static void signalToData(const double* signal, int len, int scale, short* data);
+	static void complexSignalToData(const double* signal, int len, int scale, short* data);
 	static double normalize(double in, double oldMin, double oldMax, double newMin, double newMax);
 	static short symmetricalRound(double value);
 

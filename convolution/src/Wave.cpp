@@ -7,9 +7,9 @@
 
 using namespace std;
 
-Wave::Wave(char* wavePath)
+Wave::Wave(char* filePath)
 {
-	load(wavePath);
+	load(filePath);
 }
 
 Wave::~Wave()
@@ -46,7 +46,7 @@ void Wave::load(char* loadPath)
 {
 	ifstream ifs(loadPath, ios::in | ios::binary);
 	if (ifs.fail()) {
-		throw invalid_argument("Wave::readWave: " + string(loadPath) + " could not be opened.");
+		throw invalid_argument("Wave::load: " + string(loadPath) + " could not be opened.");
 	}
 
 	/* Read Header */

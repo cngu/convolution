@@ -25,7 +25,7 @@ public:
 	short* data;
 
 public:
-	Wave(char* wavePath);
+	Wave(char* filePath);
 	~Wave();
 
 	int getNumChannels();

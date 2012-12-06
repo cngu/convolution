@@ -1,5 +1,9 @@
 #include "TestConvolver.h"
 #include "SoundFile.h"
+#include <iostream>
+
+
+using namespace std;
 
 // static void convolve(const double x[], int N, const double h[], int M, double y[], int P);
 void TestConvolver::convolve_EmptySignal()
@@ -54,6 +58,24 @@ void TestConvolver::fftConvolve_Test()
 
 }
 
+// static void dataToSignal(const short* data, int len, int min, double* signal);
+void TestConvolver::dataToSignal_Test()
+{
+
+}
+
+// static void signalToData(const double* signal, int len, int scale, short* data);
+void TestConvolver::signalToData_Test()
+{
+
+}
+
+// static void complexSignalToData(const double* signal, int len, int scale, short* data);
+void TestConvolver::complexSignalToData_Test()
+{
+
+}
+
 // static double normalize(double in, double oldMin, double oldMax, double newMin, double newMax);
 void TestConvolver::normalize_Test()
 {
@@ -68,6 +90,7 @@ void TestConvolver::symmetricalRound_Test()
 
 void TestConvolver::runAllTests()
 {
+	cout << "Running TestConvolver..." << endl;
 	convolve_EmptySignal();
 	convolve_BoundarySizes();
 	convolve_Test();
@@ -77,6 +100,10 @@ void TestConvolver::runAllTests()
 	zeroPadAndTimeToFreqDomain_ValidSignal();
 	fftConvolve_SmallSize();
 	fftConvolve_Test();
+	dataToSignal_Test();
+	signalToData_Test();
+	complexSignalToData_Test();
 	normalize_Test();
 	symmetricalRound_Test();
+	cout << "TestConvolver completed.\n" << endl;
 }

@@ -4,48 +4,38 @@
 
 using namespace std;
 
-void RegressionTest::outputComparisonTest_Mono()
+void RegressionTest::outputComparison(string file1, string file2)
 {
-	ifstream time("output/mono.wav", ifstream::in | ifstream::binary);
-	ifstream freq("output/monoFFT.wav", ifstream::in | ifstream::binary);
+	ifstream time(file1, ifstream::in | ifstream::binary);
+	ifstream freq(file2, ifstream::in | ifstream::binary);
 
-	time.seekg(44, ios::beg);
-	freq.seekg(44, ios::beg);
+	// TODO: Read and compare header, 2 byte by 2 byte. Once you reach data, read entire data chunk based on subchunk2size
+	int offset = 0;
+	short timeSample, freqSample;
+	while (! time.eof() && ! freq.eof() ) {
+		time.seekg(offset, ios::beg);
+		freq.seekg(offset, ios::beg);
 
-	short timeBuff, freqBuff;
+		time.read((char*)&timeSample, sizeof(short));
+		freq.read((char*)&freqSample, sizeof(short));
 
-	time.read((char*)&timeBuff, 2);
-	freq.read((char*)&freqBuff, 2);
+		if (! equalShorts(timeSample, freqSample)) {
+			fail("RegressionTest", string("outputComparisonTest(" + file1 + "," + file2 + ")"));
+			cout << timeSample << " " << freqSample << " " << offset << endl;
+			system("pause");
+		}
+
+		offset += 2;
+	}
 
 	time.close();
 	freq.close();
-
-	cout << "Same?: " << timeBuff << " " << freqBuff << endl;
-	system("pause");
-}
-
-void RegressionTest::outputComparisonTest_Stereo()
-{
-	ifstream time("output/mono.wav", ifstream::in | ifstream::binary);
-	ifstream freq("output/monoFFT.wav", ifstream::in | ifstream::binary);
-
-	time.seekg(44, ios::beg);
-	freq.seekg(44, ios::beg);
-
-	short timeBuff, freqBuff;
-
-	time.read((char*)&timeBuff, 2);
-	freq.read((char*)&freqBuff, 2);
-
-	time.close();
-	freq.close();
-
-	cout << "Same?: " << timeBuff << " " << freqBuff << endl;
-	system("pause");
 }
 
 void RegressionTest::runAllTests()
 {
-	outputComparisonTest_Mono();
-	outputComparisonTest_Stereo();
+	cout << "Running RegressionTest..." << endl;
+	outputComparison("output/mono.wav", "output/monoFFT.wav");
+	outputComparison("output/stereo.wav", "output/stereoFFT.wav");
+	cout << "RegressionTest completed.\n" << endl;
 }

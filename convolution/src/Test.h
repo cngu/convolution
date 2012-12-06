@@ -1,13 +1,16 @@
 #ifndef TEST_H
 #define TEST_H
 
+#include <string>
+
 class Test 
 {
 public:
-	void pass(char* className, char* method);
-	void fail(char* className, char* method, char* message);
+	static void pass(std::string className, std::string method);
+	static void fail(std::string className, std::string method);
 
-	bool equalDoubles(double a, double b);
+	static bool equalShorts(short a, short b);
+	static bool equalDoubles(double a, double b);
 };
 
 #endif
