@@ -34,6 +34,20 @@ SoundFile* SoundFile::create(char* filename)
 	}
 }
 
+void SoundFile::save(char* savePath, int numChannels, int bitsPerSample, int sampleRate, short* data, int dataLen)
+{
+	/* Find number of samples per channel */
+	int numSamples = numChannels == 1 ? dataLen : dataLen/2;
+
+	string extension = SoundFile::parseExtension(savePath);
+	if (extension.compare(".wav") == 0)
+		Wave::save(savePath, numChannels, numSamples, bitsPerSample, sampleRate, data, dataLen);
+	else if (extension.compare(".snd") == 0)
+		Snd::save(savePath, 24, sampleRate, numChannels, data, dataLen);
+	else if (extension.compare(".aiff") == 0)
+		Aiff::save(savePath, numChannels, sampleRate, data, dataLen);
+}
+
 void SoundFile::splitChannels(short* left, short* right, int len)
 {
 	for (int i = 0; i < len; i++) {

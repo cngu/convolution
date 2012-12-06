@@ -27,7 +27,14 @@ void RegressionTest::outputComparison(string file1, string file2)
 
 		offset += 2;
 	}
+	//
+	time.seekg(44, ios::beg);
+	freq.seekg(44, ios::beg);
+	time.read((char*)&timeSample, sizeof(short));
+	freq.read((char*)&freqSample, sizeof(short));
 
+	cout << timeSample << " " << freqSample << endl;
+	//
 	time.close();
 	freq.close();
 }

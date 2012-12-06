@@ -1,3 +1,1 @@
-﻿  Main.cpp
-Aiff.obj : warning LNK4075: ignoring '/EDITANDCONTINUE' due to '/OPT:REF' specification
-  convolution.vcxproj -> C:\Users\Chris\Desktop\UNI\CPSC501\A4\Chris.Nguyen.501.A4\convolution\Debug\convolution.exe
+﻿  convolution.vcxproj -> C:\Users\Chris\Desktop\UNI\CPSC501\A4\Chris.Nguyen.501.A4\convolution\Debug\convolution.exe

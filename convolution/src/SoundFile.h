@@ -9,6 +9,7 @@ class SoundFile
 public:
 	static SoundFile* create(char* filename);
 	virtual void load(char* loadPath) = 0;
+	static void save(char* savePath, int numChannels, int bitsPerSample, int sampleRate, short* data, int dataLen);
 
 	void splitChannels(short* left, short* right, int len);
 	void interleave(double* left, double* right, int len, double* output);
