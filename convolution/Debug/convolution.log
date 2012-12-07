@@ -1,1 +1,5 @@
-﻿  convolution.vcxproj -> C:\Users\Chris\Desktop\UNI\CPSC501\A4\Chris.Nguyen.501.A4\convolution\Debug\convolution.exe
+﻿  Main.cpp
+c:\users\chris\desktop\uni\cpsc501\a4\chris.nguyen.501.a4\convolution\convolution\src\main.cpp(53): warning C4996: 'fopen': This function or variable may be unsafe. Consider using fopen_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+          c:\program files (x86)\microsoft visual studio 10.0\vc\include\stdio.h(234) : see declaration of 'fopen'
+Aiff.obj : warning LNK4075: ignoring '/EDITANDCONTINUE' due to '/OPT:REF' specification
+  convolution.vcxproj -> C:\Users\Chris\Desktop\UNI\CPSC501\A4\Chris.Nguyen.501.A4\convolution\Debug\convolution.exe

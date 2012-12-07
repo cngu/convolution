@@ -10,7 +10,7 @@
 using namespace std;
 
 /* Written By Leonard Manzara. Modified by Chris Nguyen. */
-void Convolver::convolve(const double x[], int N, const double h[], int M, double y[], int P)
+void Convolver::multiplicationConvolution(const double x[], int N, const double h[], int M, double y[], int P)
 {
 	int n, m;
 
@@ -37,101 +37,29 @@ void Convolver::convolve(const double x[], int N, const double h[], int M, doubl
 	}
 }
 
-void Convolver::convolve(SoundFile* dry, SoundFile* ir, short y[], int P)
+void Convolver::convolve(double x[], int N, double h[], int M, short y[], int P)
 {
-	// TODO: Move pow() out of loop, don't need to recalculate every iteration
-	// TODO: Replace pow with either adding every loop or bit shifting and adding
+	/* Perform Time domain convolution */
 	double* resultTemp = new double[P];
+	multiplicationConvolution(x, N, h, M, resultTemp, P);
 
-	double* x = new double[dry->getDataSize()];
-	Convolver::dataToSignal(dry->getData(), dry->getDataSize(), dry->getAbsMinValue(), x);
-
-	double* h = new double[ir->getDataSize()];
-	Convolver::dataToSignal(ir->getData(), ir->getDataSize(), ir->getAbsMinValue(), h);
-		
-	if (ir->getNumChannels() == 1) {
-		convolve(x, dry->getDataSize(), h, ir->getDataSize(), resultTemp, P);
-
-		// TODO: Combine these two loops	
-		/* Find the lower and upper bounds of the convolved output */
-		double oldMin = resultTemp[0], oldMax = resultTemp[0];
-		for (int i = 0; i < P; i++) {
-			if (resultTemp[i] < oldMin)
-				oldMin = resultTemp[i];
-			if (resultTemp[i] > oldMax)
-				oldMax = resultTemp[i];
-		}
-
-		/* Normalize bounds of convolved output back to between -1 and 1 */
-		for (int i = 0; i < P; i++) {
-			resultTemp[i] = normalize(resultTemp[i], oldMin, oldMax, -1.0, 1.0);
-		}
-
-		/* Scale convolved signal back to short integer data */
-		Convolver::signalToData(resultTemp, P, dry->getMaxValue(), y);
-	}
-	else if (ir->getNumChannels() == 2) {
-		// TODO: Calculate ir->getDataSize()/2 once, and use bitshift. Constants (use const!!!!) and strength reduction, respectively.
-
-		/* Split stereo impulse response into left and right channels */
-		double* hLeft = new double[ir->getDataSize()/2];
-		double* hRight = new double[ir->getDataSize()/2];
-		
-		for (int i = 0; i < ir->getDataSize()/2; i++) {
-			hLeft[i] = h[i*2];
-			hRight[i] = h[i*2 + 1];
-		}
-
-		/* Convolve mono dry recording with both left and right IR channels, separately */
-		double* resultTempLeft = new double[P/2];
-		double* resultTempRight = new double[P/2];
-		convolve(x, dry->getDataSize(), hLeft, ir->getDataSize()/2, resultTempLeft, P/2);
-		convolve(x, dry->getDataSize(), hRight, ir->getDataSize()/2, resultTempRight, P/2);
-		
-		/* Find the lower and upper bounds of the convolved output, separately! */
-		// TODO: If desperate, use algorithm's min_element or w/e instead. THat loops 4 times for each left/right min/max.
-		// Optimize it by using the below
-		double oldLeftMin = resultTempLeft[0], oldLeftMax = resultTempLeft[0];
-		double oldRightMin = resultTempRight[0], oldRightMax = resultTempRight[0];
-		for (int i = 0; i < P/2; i++) {
-			if (resultTempLeft[i] < oldLeftMin)
-				oldLeftMin = resultTempLeft[i];
-			if (resultTempLeft[i] > oldLeftMax)
-				oldLeftMax = resultTempLeft[i];
-			if (resultTempRight[i] < oldRightMin)
-				oldRightMin = resultTempRight[i];
-			if (resultTempRight[i] > oldRightMax)
-				oldRightMax = resultTempRight[i];
-		}
-
-		/* Normalize bounds of both left and right IR channels back to be between -1 and 1 */
-		for (int i = 0; i < P/2; i++) {
-			resultTempLeft[i] = normalize(resultTempLeft[i], oldLeftMin, oldLeftMax, -1.0, 1.0);
-			resultTempRight[i] = normalize(resultTempRight[i], oldRightMin, oldRightMax, -1.0, 1.0);
-		}
-
-		short* yLeft = new short[P/2];
-		short* yRight = new short[P/2];
-
-		/* Scale both left and right convolved signals back to short integer data */
-		Convolver::signalToData(resultTempLeft, P/2, dry->getMaxValue(), yLeft);
-		Convolver::signalToData(resultTempRight, P/2, dry->getMaxValue(), yRight);
-
-		/* Interleave the left and right convolutions */
-		for (int i = 0; i < P; i+=2) {
-			y[i] = yLeft[i/2];
-			y[i+1] = yRight[i/2];
-		}
-
-		delete[] hLeft;
-		delete[] hRight;
-		delete[] resultTempLeft;
-		delete[] resultTempRight;
+	// TODO: First use min_element, then use this AND combine these two loops	
+	/* Find the lower and upper bounds of the convolved output */
+	double oldMin = resultTemp[0], oldMax = resultTemp[0];
+	for (int i = 0; i < P; i++) {
+		if (resultTemp[i] < oldMin)
+			oldMin = resultTemp[i];
+		if (resultTemp[i] > oldMax)
+			oldMax = resultTemp[i];
 	}
 
-	delete[] x;
-	delete[] h;
-	delete[] resultTemp;
+	/* Normalize bounds of convolved output back to between -1 and 1 */
+	for (int i = 0; i < P; i++) {
+		resultTemp[i] = normalize(resultTemp[i], oldMin, oldMax, -1.0, 1.0);
+	}
+
+	/* Scale convolved signal back to short integer data */
+	Convolver::signalToData(resultTemp, P, 32767, y);
 }
 
 //  The four1 FFT from Numerical Recipes in C,
@@ -206,7 +134,7 @@ void Convolver::zeroPadAndTimeToFreqDomain(double *timeDomain, int timeDomainLen
 	four1(outputFreqDomain-1, structuredSize, 1);
 }
 
-void Convolver::complexMultiplication(double* x, double* h, double* r, int size)
+void Convolver::complexMultiplicationConvolution(double* x, double* h, double* r, int size)
 {
 	for (int i = 0; i < size*2; i+=2) {
 		r[i] = x[i] * h[i] - x[i+1] * h[i+1];
@@ -230,7 +158,7 @@ void Convolver::fftConvolve(double x[], int N, double h[], int M, short y[], int
 
 	/* Perform Frequency-Domain Convolution */
 	double* R = new double[structuredSize * 2];
-	Convolver::complexMultiplication(X, H, R, structuredSize);
+	Convolver::complexMultiplicationConvolution(X, H, R, structuredSize);
 
 	/* Convert Frequency-Domain back to Time-Domain */
 	Convolver::four1(R-1, structuredSize, -1);

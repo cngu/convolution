@@ -12,7 +12,7 @@
 #include "Aiff.h"
 
 // Control directives
-#define FFT			// Uncomment to use Frequency-Domain Convolution rather than Time Domain
+//#define FFT			// Uncomment to use Frequency-Domain Convolution rather than Time Domain
 #define TESTS		// Uncomment to run tests
 
 using namespace std;
@@ -49,6 +49,12 @@ bool checkArgs(int argc, char* argv[])
 
 int main(int argc, char* argv[])
 {
+	Snd* t = (Snd*) SoundFile::create("sounds/dry/testCase1.snd");
+	FILE* f = fopen("t.snd", "wb");
+	Snd::saveHeader(f, t->dataOffset, t->getDataSize(), t->getSampleRate(), t->getNumChannels());
+	Snd::saveData(f, t->getData(), t->getDataSize());
+	return 0;
+
 #ifdef TESTS
 	cout << "===== RUNNING TESTS =====" << endl;
 	RegressionTest::runAllTests();
@@ -56,8 +62,8 @@ int main(int argc, char* argv[])
 	cout << "==== TESTS COMPLETED ====" << endl;
 	system("pause");
 #endif
-		
-	/* Ensure dry, IR, and output file names are provided */
+
+	/* Ensure that valid dry, IR, and output file names are provided */
 	if (! checkArgs(argc, argv))
 		return 1;
 
@@ -71,8 +77,14 @@ int main(int argc, char* argv[])
 
 	cout << "DR Size: " << dry->getDataSize() << " IR Size: " << ir->getDataSize() << endl;
 
-	short* result;
-	int P;
+	short* result;	// Resulting data of convolution to write to file
+	int P;			// Length of result
+
+	/* Normalize the input data to -1 and +1 */
+	double* dryNormalized = new double[dry->getDataSize()];
+	double* irNormalized = new double[ir->getDataSize()];
+	Convolver::dataToSignal(dry->getData(), dry->getDataSize(), dry->getAbsMinValue(), dryNormalized);
+	Convolver::dataToSignal(ir->getData(), ir->getDataSize(), ir->getAbsMinValue(), irNormalized);
 
 #ifndef FFT
 	/*          *
@@ -81,51 +93,66 @@ int main(int argc, char* argv[])
 
 	if (ir->getNumChannels() == 1) {
 		P = dry->getDataSize() + ir->getDataSize() - 1;
+
+		/* Perform time domain convolution */
 		result = new short[P];
-		Convolver::convolve(dry, ir, result, P);
+		Convolver::convolve(dryNormalized, dry->getDataSize(), irNormalized, ir->getDataSize(), result, P);
 
 		/* Save resulting .wav file */
 		Wave::save(argv[3], ir->getNumChannels(), P, dry->getBitsPerSample(), dry->getSampleRate(), result, P);
 	}
 	else if (ir->getNumChannels() == 2) {
 		P = dry->getDataSize() + ir->getDataSize()/2 - 1;
+
+		/* Split normalized stereo impulse response into left and right channels */
+		double* irLeftNormalized = new double[ir->getDataSize()/2];
+		double* irRightNormalized = new double[ir->getDataSize()/2];
+		for (int i = 0; i < ir->getDataSize()/2; i++) {
+			irLeftNormalized[i] = irNormalized[i*2];
+			irRightNormalized[i] = irNormalized[i*2 + 1];
+		}
+
+		/* Perform time domain convolution */
+		short* resultLeft = new short[P];
+		short* resultRight = new short[P];
+		Convolver::convolve(dryNormalized, dry->getDataSize(), irLeftNormalized, ir->getDataSize()/2, resultLeft, P);
+		Convolver::convolve(dryNormalized, dry->getDataSize(), irRightNormalized, ir->getDataSize()/2, resultRight, P);
+
+		/* Interleave left and right channel data */
 		result = new short[P*2];
-		Convolver::convolve(dry, ir, result, P*2);
+		for (int i = 0; i < P*2; i+=2) {
+			result[i] = resultLeft[i/2];
+			result[i+1] = resultRight[i/2];
+		}
 
 		/* Save resulting .wav file */
 		Wave::save(argv[3], ir->getNumChannels(), P, dry->getBitsPerSample(), dry->getSampleRate(), result, P*2);
+
+		delete[] resultLeft;
+		delete[] resultRight;
 	}
 	else {
-		cout << ir->getNumChannels() << " channels are not supported.\mAborting program. << endl;
+		cout << ir->getNumChannels() << " channels are not supported.\nAborting program." << endl;
 	}
 #else
 	/*								*
 	 * ALGORITHM-BASED OPTIMIZATION *
 	 *								*/
 
-	/* Normalize the input data to -1 and +1 */
-	double* dryNormalized = new double[dry->getDataSize()];
-	double* irNormalized = new double[ir->getDataSize()];
-	Convolver::dataToSignal(dry->getData(), dry->getDataSize(), dry->getAbsMinValue(), dryNormalized);
-	Convolver::dataToSignal(ir->getData(), ir->getDataSize(), ir->getAbsMinValue(), irNormalized);
-
 	if (ir->getNumChannels() == 1) {
 		/* P = N+M-1 */
 		P = dry->getDataSize() + ir->getDataSize() - 1;
-		result = new short[P];
 
 		/* Perform FFT Convolution */
+		result = new short[P];
 		Convolver::fftConvolve(dryNormalized, dry->getDataSize(), irNormalized, ir->getDataSize(), result, P);
 
 		/* Save to file */
 		SoundFile::save(argv[3], ir->getNumChannels(), dry->getBitsPerSample(), dry->getSampleRate(), result, P);
-
-		delete[] result;
 	}
 	else {
 		/* P = N+(M/2)-1, where P is the length of each half of this two-channel convolution */
 		P = dry->getDataSize() + ir->getDataSize()/2 - 1;
-		result = new short[P*2];
 
 		/* Split normalized stereo impulse response into left and right channels */
 		double* irLeftNormalized = new double[ir->getDataSize()/2];
@@ -156,6 +183,9 @@ int main(int argc, char* argv[])
 	}
 
 #endif
-	
+	delete[] dryNormalized;
+	delete[] irNormalized;
+	delete[] result;
+
 	return 0;
 }

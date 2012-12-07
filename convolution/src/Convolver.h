@@ -8,12 +8,12 @@ class Convolver
 private:
 
 public:
-	static void convolve(const double x[], int N, const double h[], int M, double y[], int P);
-	static void convolve(SoundFile* dry, SoundFile* ir, short y[], int P);
+	static void multiplicationConvolution(const double x[], int N, const double h[], int M, double y[], int P);
+	static void convolve(double x[], int N, double h[], int M, short y[], int P);
 
 	static void four1(double data[], int nn, int isign);
 	static void zeroPadAndTimeToFreqDomain(double *timeDomain, int timeDomainLen, double *outputFreqDomain, int structuredSize);
-	static void complexMultiplication(double* x, double* h, double* r, int size);
+	static void complexMultiplicationConvolution(double* x, double* h, double* r, int size);
 	static void fftConvolve(double x[], int N, double h[], int M, short y[], int P);
 	static void fftConvolve(SoundFile* dry, SoundFile* ir, short y[], int P);
 	
