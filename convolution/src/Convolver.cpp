@@ -122,16 +122,14 @@ void Convolver::zeroPadAndTimeToFreqDomain(double *timeDomain, int timeDomainLen
 
 	/* Convert Real signal to Complex signal */
 	for (; i < timeDomainLen; i++ )	{
-		// TODO: Shift
-		i2 = i*2;
+		i2 = i << 1;
 		outputFreqDomain[i2] = timeDomain[i];
 		outputFreqDomain[i2+1] = 0.0;
 	}
 
 	/* zero pad */
 	for (; i < structuredSize; i++ ) {
-		// TODO: Shift
-		i2 = i*2;
+		i2 = i << 1;
 		outputFreqDomain[i2] = 0.0;
 		outputFreqDomain[i2+1] = 0.0;
 	}
@@ -154,9 +152,9 @@ void Convolver::fftConvolve(double x[], int N, double h[], int M, short y[], int
 	int structuredSize = 1;
 
 	while (structuredSize < P)
-		structuredSize *= 2;	// TODO: Replace with bit shift
+		structuredSize = structuredSize << 1;
 
-	int structuredSize2 = structuredSize*2;
+	int structuredSize2 = structuredSize << 1;
 
 	double* X = new double[structuredSize2];
 	double* H = new double[structuredSize2];
@@ -178,7 +176,6 @@ void Convolver::fftConvolve(double x[], int N, double h[], int M, short y[], int
 		   max = R[0]/(double)structuredSize;
 
 	for (int i = 0; i < structuredSize2; i+=2) {
-		// TODO: Bit shift
 		R[i] /= (double)structuredSize;
 
 		if (R[i] < min)

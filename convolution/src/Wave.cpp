@@ -71,17 +71,14 @@ void Wave::load(char* loadPath)
 
 	// TODO: If desperate, put this if inside the loop, and then optimize it back out like it is now
 	if (bitsPerSample == 16) {
-		// TODO: Shift RIGHT 1 instead
-		dataSize = subchunk2Size/2;
+		dataSize = subchunk2Size >> 1;
 		data = new short[dataSize];
 
 		short sample;
 		for (int i = 0; i < subchunk2Size; i+=2) {
-			// TODO: Shift left 8 instead
 			sample = (short) ( (unsigned char) rawData[i] );
-			sample += (short) ( (unsigned char) rawData[i+1]) * 256;
-			// TODO: Shift RIGHT 1 instead
-			data[i/2] = sample;
+			sample += (short) ( (unsigned char) rawData[i+1]) << 8;
+			data[i>>1] = sample;
 		}
 	}
 	else {

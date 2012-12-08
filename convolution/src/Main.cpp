@@ -97,8 +97,7 @@ int main(int argc, char* argv[])
 	}
 	else if (ir->getNumChannels() == 2) {
 		/* Calculate half size of impulse response ONCE and store in halfM */
-		// TODO: Shift
-		int halfM = ir->getDataSize()/2;
+		int halfM = ir->getDataSize() >> 1;
 
 		/* P = N+(M/2)-1, where P is the length of each half of this two-channel convolution */
 		P = dry->getDataSize() + halfM - 1;
@@ -108,8 +107,7 @@ int main(int argc, char* argv[])
 		double* irRightNormalized = new double[halfM];
 
 		for (int i = 0, i2 = 0; i < halfM; i++) {
-			// TODO: Shift
-			i2 = i*2;
+			i2 = i << 1;
 			irLeftNormalized[i] = irNormalized[i2];
 			irRightNormalized[i] = irNormalized[i2 + 1];
 		}
@@ -129,8 +127,7 @@ int main(int argc, char* argv[])
 		/* Interleave left and right channel data */
 		result = new short[P*2];
 		for (int i = 0, halfI = 0; i < P*2; i+=2) {
-			// TODO: Shift
-			halfI = i/2;
+			halfI = i >> 1;
 			result[i] = resultLeft[halfI];
 			result[i+1] = resultRight[halfI];
 		}
