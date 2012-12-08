@@ -6,7 +6,6 @@
 #include "Wave.h"
 
 #define SWAP(a,b)  tempr=(a);(a)=(b);(b)=tempr
-//#define NORMALIZE(x,fromMin,fromMax,toMin,toMax)  ((toMax-toMin)*(x-fromMin) / (fromMax-fromMin)) + toMin
 
 using namespace std;
 
@@ -51,7 +50,7 @@ void Convolver::convolve(double x[], int N, double h[], int M, short y[], int P)
 
 	/* Normalize bounds of convolved output back to between -1 and 1 */
 	for (int i = 0; i < P; i++) {
-		resultTemp[i] = normalize(resultTemp[i], oldMin, oldMax, -1.0, 1.0);
+		resultTemp[i] = NORMALIZE(resultTemp[i], oldMin, oldMax, -1.0, 1.0);
 	}
 
 	/* Scale convolved signal back to short integer data */
@@ -185,10 +184,9 @@ void Convolver::fftConvolve(double x[], int N, double h[], int M, short y[], int
 			max = R[i];
 	}
 	
-	// TODO: Merge with loop above
 	// TODO: Could also partial unroll it, be careful
 	for (int i = 0; i < structuredSize2; i+=2) {
-		R[i] = Convolver::normalize(R[i], min, max, -1.0, 1.0);
+		R[i] = NORMALIZE(R[i], min, max, -1.0, 1.0);
 	}
 
 	/* Scale result back up to short */
@@ -221,12 +219,6 @@ void Convolver::complexSignalToData(const double* signal, int signalLen, int sca
 	for (int i = 0; i < signalLen; i+=2) {
 		data[i/2] = Convolver::symmetricalRound(signal[i] * scale);
 	}
-}
-
-//TODO: OR just macro it (put it in header Convolver.h)
-double Convolver::normalize(double in, double fromMin, double fromMax, double toMin, double toMax)
-{
-	return ( (toMax-toMin) * (in-fromMin) / (fromMax-fromMin) ) + toMin;
 }
 
 // TODO: Write in assembly or macro it (put it in header Convolver.h)

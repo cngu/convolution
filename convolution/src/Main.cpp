@@ -13,7 +13,7 @@
 
 // Control directives
 #define FFT			// Uncomment to use Frequency-Domain Convolution rather than Time Domain
-#define TESTS		// Uncomment to run tests
+//#define TESTS		// Uncomment to run tests
 
 using namespace std;
 

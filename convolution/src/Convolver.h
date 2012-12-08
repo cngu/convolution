@@ -3,6 +3,8 @@
 
 #include "SoundFile.h"
 
+#define NORMALIZE(x,fromMin,fromMax,toMin,toMax)  (((toMax)-(toMin))*((x)-(fromMin)) / ((fromMax)-(fromMin))) + (toMin)
+
 class Convolver
 {
 private:
@@ -20,7 +22,6 @@ public:
 	static void dataToSignal(const short* data, int len, int min, double* signal);
 	static void signalToData(const double* signal, int len, int scale, short* data);
 	static void complexSignalToData(const double* signal, int len, int scale, short* data);
-	static double normalize(double in, double oldMin, double oldMax, double newMin, double newMax);
 	static short symmetricalRound(double value);
 
 private:

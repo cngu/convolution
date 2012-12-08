@@ -199,7 +199,7 @@ void TestConvolver::complexSignalToData_Test()
 void TestConvolver::normalize_Test()
 {
 	double value = 12345;
-	double result = Convolver::normalize(value, -32768, 32767, 0, 100);
+	double result = NORMALIZE(value, -32768, 32767, 0, 100);
 	double expected = 68.838;
 	if (! Test::equalDoubles(result, expected))
 		fail("TestConvolver", string("normalize_Test"));
