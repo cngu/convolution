@@ -11,10 +11,6 @@ public:
 	virtual void load(char* loadPath) = 0;
 	static void save(char* savePath, int numChannels, int bitsPerSample, int sampleRate, short* data, int dataLen);
 
-	void splitChannels(short* left, short* right, int len);
-	void interleave(double* left, double* right, int len, double* output);
-	void interleaveComplex(double* left, double* right, int len, double* output);
-
 	virtual int getNumChannels() = 0;
 	virtual int getSampleRate() = 0;
 	virtual short getBitsPerSample() = 0;

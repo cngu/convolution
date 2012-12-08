@@ -13,7 +13,7 @@
 
 // Control directives
 #define FFT			// Uncomment to use Frequency-Domain Convolution rather than Time Domain
-#define TESTS		// Uncomment to run tests
+//#define TESTS		// Uncomment to run tests
 
 using namespace std;
 
@@ -51,7 +51,7 @@ int main(int argc, char* argv[])
 {
 #ifdef TESTS
 	cout << "===== RUNNING TESTS =====" << endl;
-	RegressionTest::runAllTests();
+	//RegressionTest::runAllTests(); 
 	TestConvolver::runAllTests();
 	cout << "==== TESTS COMPLETED ====" << endl;
 	system("pause");

@@ -14,14 +14,6 @@ void Convolver::multiplicationConvolution(const double x[], int N, const double 
 {
 	int n, m;
 
-	/*  Make sure the output buffer is the right size: P = N + M - 1  */
-	if (P != (N + M - 1)) {
-		printf("Output signal vector is the wrong size\n");
-		printf("It is %-d, but should be %-d\n", P, (N + M - 1));
-		printf("Aborting convolution\n");
-		return;
-	}
-
 	/*  Clear the output buffer y[] to all zero values  */  
 	for (n = 0; n < P; n++)
 		y[n] = 0.0;
@@ -39,6 +31,11 @@ void Convolver::multiplicationConvolution(const double x[], int N, const double 
 
 void Convolver::convolve(double x[], int N, double h[], int M, short y[], int P)
 {
+	/*  Make sure the output buffer is the right size: P = N + M - 1  */
+	if (N == 0 || M == 0 || P != (N + M - 1)) {
+		return;
+	}
+
 	/* Perform Time domain convolution */
 	double* resultTemp = new double[P];
 	multiplicationConvolution(x, N, h, M, resultTemp, P);

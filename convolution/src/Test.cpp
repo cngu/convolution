@@ -26,3 +26,49 @@ bool Test::equalDoubles(double a, double b)
 {
 	return fabs(a-b) < 0.1;
 }
+
+void Test::printArray(short* array, int len) 
+{
+	int i = 0;
+	for (; i < len-1; i++) 
+		cout << array[i] << ", ";
+	cout << array[i] << endl;
+}
+
+void Test::printArray(double* array, int len) 
+{
+	int i = 0;
+	for (; i < len-1; i++) 
+		cout << array[i] << ", ";
+	cout << array[i] << endl;
+}
+
+bool Test::equalArrays(short* a, short* b, int len)
+{
+	for (int i = 0; i < len; i++)
+		if (! equalShorts(a[i], b[i]))
+			return false;
+
+	return true;
+}
+
+bool Test::equalArrays(double* a, double* b, int len)
+{
+	for (int i = 0; i < len; i++)
+		if (! equalDoubles(a[i], b[i]))
+			return false;
+
+	return true;
+}
+
+void Test::clearArray(double* array, int len) 
+{
+	for (int i = 0; i < len; i++)
+		array[i] = 0.0;
+}
+
+void Test::clearArray(short* array, int len)
+{
+	for (int i = 0; i < len; i++)
+		array[i] = 0;
+}

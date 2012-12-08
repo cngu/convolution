@@ -11,6 +11,14 @@ public:
 
 	static bool equalShorts(short a, short b);
 	static bool equalDoubles(double a, double b);
+	static bool equalArrays(short* a, short* b, int len);
+	static bool equalArrays(double* a, double* b, int len);
+
+	static void printArray(double* array, int len);
+	static void printArray(short* array, int len);
+
+	static void clearArray(double* array, int len);
+	static void clearArray(short* array, int len);
 };
 
 #endif

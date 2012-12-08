@@ -48,33 +48,6 @@ void SoundFile::save(char* savePath, int numChannels, int bitsPerSample, int sam
 		Aiff::save(savePath, numChannels, sampleRate, data, dataLen);
 }
 
-void SoundFile::splitChannels(short* left, short* right, int len)
-{
-	for (int i = 0; i < len; i++) {
-		left[i] = getData()[i*2];
-		right[i] = getData()[i*2 + 1];
-	}
-}
-
-void SoundFile::interleave(double* left, double* right, int len, double* output)
-{
-	for (int i = 0; i < len; i++) {
-		output[i*2] = left[i];
-		output[i*2+1] = right[i];
-	}
-}
-
-void SoundFile::interleaveComplex(double* left, double* right, int len, double* output)
-{
-	// TODO: calculate i*4 and i*2 only once per iteration. Use bit shifts too. Same with normal interlave above
-	for (int i = 0; i < len/2; i++) {
-		output[i*4] = left[i*2];
-		output[i*4+1] = left[i*2+1];
-		output[i*4+2] = right[i*2];
-		output[i*4+3] = right[i*2+1];
-	}
-}
-
 string SoundFile::parseExtension(char* filename) 
 {
 	string file(filename);
