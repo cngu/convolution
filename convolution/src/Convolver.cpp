@@ -178,6 +178,7 @@ void Convolver::fftConvolve(double x[], int N, double h[], int M, short y[], int
 		   max = R[0]/(double)structuredSize;
 
 	for (int i = 0; i < structuredSize2; i+=2) {
+		// TODO: Bit shift
 		R[i] /= (double)structuredSize;
 
 		if (R[i] < min)
@@ -224,7 +225,6 @@ void Convolver::complexSignalToData(const double* signal, int signalLen, int sca
 	}
 }
 
-//TODO: Don't need to recalculate all that stuff. Only need to calculate in-fromMin. pass in the rest
 //TODO: OR just macro it (put it in header Convolver.h)
 double Convolver::normalize(double in, double fromMin, double fromMax, double toMin, double toMax)
 {
