@@ -6,6 +6,7 @@
 #include "Wave.h"
 
 #define SWAP(a,b)  tempr=(a);(a)=(b);(b)=tempr
+//#define NORMALIZE(x,fromMin,fromMax,toMin,toMax)  ((toMax-toMin)*(x-fromMin) / (fromMax-fromMin)) + toMin
 
 using namespace std;
 

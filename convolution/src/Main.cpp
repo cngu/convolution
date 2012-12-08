@@ -13,7 +13,7 @@
 
 // Control directives
 #define FFT			// Uncomment to use Frequency-Domain Convolution rather than Time Domain
-//#define TESTS		// Uncomment to run tests
+#define TESTS		// Uncomment to run tests
 
 using namespace std;
 
@@ -69,27 +69,30 @@ int main(int argc, char* argv[])
 	if (dry == nullptr || ir == nullptr)
 		return 1;
 
-	cout << "DR Size: " << dry->getDataSize() << " IR Size: " << ir->getDataSize() << endl;
+	int dryDataSize = dry->getDataSize();
+	int irDataSize = ir->getDataSize();
+
+	cout << "DR Size: " << dryDataSize << " IR Size: " << irDataSize << endl;
 
 	int P;			// Length of result
 	short* result;	// Resulting data of convolution to write to file
-
+	
 	/* Normalize the input data to -1 and +1 */
-	double* dryNormalized = new double[dry->getDataSize()];
-	double* irNormalized = new double[ir->getDataSize()];
-	Convolver::dataToSignal(dry->getData(), dry->getDataSize(), dry->getAbsMinValue(), dryNormalized);
-	Convolver::dataToSignal(ir->getData(), ir->getDataSize(), ir->getAbsMinValue(), irNormalized);
+	double* dryNormalized = new double[dryDataSize];
+	double* irNormalized = new double[irDataSize];
+	Convolver::dataToSignal(dry->getData(), dryDataSize, dry->getAbsMinValue(), dryNormalized);
+	Convolver::dataToSignal(ir->getData(), irDataSize, ir->getAbsMinValue(), irNormalized);
 	
 	if (ir->getNumChannels() == 1) {
-		P = dry->getDataSize() + ir->getDataSize() - 1;
+		P = dryDataSize + irDataSize - 1;
 
 		/* Perform time domain convolution */
 		result = new short[P];
 
 #ifndef FFT
-		Convolver::convolve(dryNormalized, dry->getDataSize(), irNormalized, ir->getDataSize(), result, P);
+		Convolver::convolve(dryNormalized, dryDataSize, irNormalized, irDataSize, result, P);
 #else
-		Convolver::fftConvolve(dryNormalized, dry->getDataSize(), irNormalized, ir->getDataSize(), result, P);
+		Convolver::fftConvolve(dryNormalized, dryDataSize, irNormalized, irDataSize, result, P);
 #endif
 
 		/* Save resulting .wav file */
@@ -97,10 +100,10 @@ int main(int argc, char* argv[])
 	}
 	else if (ir->getNumChannels() == 2) {
 		/* Calculate half size of impulse response ONCE and store in halfM */
-		int halfM = ir->getDataSize() >> 1;
+		int halfM = irDataSize >> 1;
 
 		/* P = N+(M/2)-1, where P is the length of each half of this two-channel convolution */
-		P = dry->getDataSize() + halfM - 1;
+		P = dryDataSize + halfM - 1;
 
 		/* Split normalized stereo impulse response into left and right channels */
 		double* irLeftNormalized = new double[halfM];
@@ -117,11 +120,11 @@ int main(int argc, char* argv[])
 		short* resultRight = new short[P];
 
 #ifndef FFT
-		Convolver::convolve(dryNormalized, dry->getDataSize(), irLeftNormalized, halfM, resultLeft, P);
-		Convolver::convolve(dryNormalized, dry->getDataSize(), irRightNormalized, halfM, resultRight, P);
+		Convolver::convolve(dryNormalized, dryDataSize, irLeftNormalized, halfM, resultLeft, P);
+		Convolver::convolve(dryNormalized, dryDataSize, irRightNormalized, halfM, resultRight, P);
 #else
-		Convolver::fftConvolve(dryNormalized, dry->getDataSize(), irLeftNormalized, halfM, resultLeft, P);
-		Convolver::fftConvolve(dryNormalized, dry->getDataSize(), irRightNormalized, halfM, resultRight, P);
+		Convolver::fftConvolve(dryNormalized, dryDataSize, irLeftNormalized, halfM, resultLeft, P);
+		Convolver::fftConvolve(dryNormalized, dryDataSize, irRightNormalized, halfM, resultRight, P);
 #endif
 
 		/* Interleave left and right channel data */
