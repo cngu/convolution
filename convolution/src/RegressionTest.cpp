@@ -22,7 +22,7 @@ void RegressionTest::outputComparison(string file1, string file2)
 		if (! equalShorts(timeSample, freqSample)) {
 			fail("RegressionTest", string("outputComparisonTest(" + file1 + "," + file2 + ")"));
 			cout << timeSample << " " << freqSample << " " << offset << endl;
-			system("pause");
+			break;
 		}
 
 		offset += 2;

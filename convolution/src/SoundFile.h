@@ -33,7 +33,7 @@ public:
 protected:
 	void readIntChunk(std::ifstream& ifs, int& offset, const int& value);
 	void readShortChunk(std::ifstream& ifs, int& offset, const short& value);
-	void readUnsignedIntChunk(std::ifstream& ifs, int& offset, const unsigned int& value);
+	void readUnsignedIntChunk(std::ifstream& ifs, int& offset, unsigned int& value);
 	
 };
 

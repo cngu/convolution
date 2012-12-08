@@ -1,4 +1,5 @@
 #include "Snd.h"
+#include <algorithm>
 
 using namespace std;
 
@@ -64,6 +65,7 @@ void Snd::load(char* loadPath)
 	short sample;
 	for (int i = 0; i < dataSizeInBytes; i+=2) {
 		// TODO: Shift left 8 instead
+		/* Shorts made from opposite byte order because snd is stored in big endian */
 		sample = (short) ( (unsigned char) rawData[i] );
 		sample += (short) ( (unsigned char) rawData[i+1]) * 256;
 		// TODO: Shift RIGHT 1 instead
@@ -93,13 +95,6 @@ void Snd::saveHeader(FILE *outputFile, unsigned int theDataOffset, unsigned int 
 
 	// Channels
 	SoundFile::fwriteIntMSB(theChannels, outputFile);
-
-	// Write optional annotation
-	theDataOffset -= 24;
-	while (theDataOffset > 0) {
-		SoundFile::fwriteIntMSB(0, outputFile);
-		theDataOffset -= 4;
-	}
 }
 
 void Snd::saveData(FILE* outputFile, short data[], int len)
