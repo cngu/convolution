@@ -69,7 +69,6 @@ void Wave::load(char* loadPath)
 	ifs.seekg(offset, ios::beg);
 	ifs.read(rawData, subchunk2Size);
 
-	// TODO: If desperate, put this if inside the loop, and then optimize it back out like it is now
 	if (bitsPerSample == 16) {
 		dataSize = subchunk2Size >> 1;
 		data = new short[dataSize];

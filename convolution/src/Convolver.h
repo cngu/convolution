@@ -22,7 +22,7 @@ public:
 	static void dataToSignal(const short* data, int len, int min, double* signal);
 	static void signalToData(const double* signal, int len, int scale, short* data);
 	static void complexSignalToData(const double* signal, int len, int scale, short* data);
-	static short symmetricalRound(double value);
+	inline static short symmetricalRound(double value);
 
 private:
 	

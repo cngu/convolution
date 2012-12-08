@@ -49,9 +49,13 @@ void Convolver::convolve(double x[], int N, double h[], int M, short y[], int P)
 	}
 
 	/* Normalize bounds of convolved output back to between -1 and 1 */
-	for (int i = 0; i < P; i++) {
+	int i;
+	for (i = 0; i < P-1; i+=2) {
 		resultTemp[i] = NORMALIZE(resultTemp[i], oldMin, oldMax, -1.0, 1.0);
+		resultTemp[i+1] = NORMALIZE(resultTemp[i+1], oldMin, oldMax, -1.0, 1.0);
 	}
+	if (i == P-1)
+		resultTemp[i] = NORMALIZE(resultTemp[i], oldMin, oldMax, -1.0, 1.0);
 
 	/* Scale convolved signal back to short integer data */
 	Convolver::signalToData(resultTemp, P, 32767, y);
@@ -171,7 +175,6 @@ void Convolver::fftConvolve(double x[], int N, double h[], int M, short y[], int
 	Convolver::four1(R-1, structuredSize, -1);
 
 	/* Divide everything by N and find min/max */
-	// TODO: Use min_element or w/e and then optimize it to this current version
 	double min = R[0]/(double)structuredSize, 
 		   max = R[0]/(double)structuredSize;
 
@@ -184,10 +187,13 @@ void Convolver::fftConvolve(double x[], int N, double h[], int M, short y[], int
 			max = R[i];
 	}
 	
-	// TODO: Could also partial unroll it, be careful
-	for (int i = 0; i < structuredSize2; i+=2) {
+	int i;
+	for (i = 0; i < structuredSize2-2; i+=4) {
 		R[i] = NORMALIZE(R[i], min, max, -1.0, 1.0);
+		R[i+2] = NORMALIZE(R[i+2], min, max, -1.0, 1.0);
 	}
+	if (i == structuredSize2-1 || i == structuredSize2-2)
+		R[i] = NORMALIZE(R[i], min, max, -1.0, 1.0);
 
 	/* Scale result back up to short */
 	Convolver::complexSignalToData(R, P*2, 32767, y);
@@ -199,30 +205,38 @@ void Convolver::fftConvolve(double x[], int N, double h[], int M, short y[], int
 
 void Convolver::dataToSignal(const short* data, int len, int min, double* signal)
 {
-	// TODO: do more than one thing per iteration
-	for (int i = 0; i < len; i++) {
+	int i;
+	for (i = 0; i < len-1; i+=2) {
 		signal[i] = (double) data[i] / min;
+		signal[i+1] = (double) data[i+1] / min;
 	}
+	if (i == len-1)
+		signal[i] = (double) data[i] / min;
 }
 
 void Convolver::signalToData(const double* signal, int signalLen, int scale, short* data) 
 {
-	// TODO: do more than one thing per iteration
-	for (int i = 0; i < signalLen; i++) {
+	int i;
+	for (i = 0; i < signalLen-1; i+=2) {
 		data[i] = Convolver::symmetricalRound(signal[i] * scale);
+		data[i+1] = Convolver::symmetricalRound(signal[i+1] * scale);
 	}
+	if (i == signalLen-1)
+		data[i] = Convolver::symmetricalRound(signal[i] * scale);
 }
 
 void Convolver::complexSignalToData(const double* signal, int signalLen, int scale, short* data)
 {
-	// TODO: do more than one thing per iteration
-	for (int i = 0; i < signalLen; i+=2) {
+	int i;
+	for (i = 0; i < signalLen-2; i+=4) {
 		data[i/2] = Convolver::symmetricalRound(signal[i] * scale);
+		data[(i+2)/2] = Convolver::symmetricalRound(signal[i+2] * scale);
 	}
+	if (i == signalLen-1 || i == signalLen-2)
+		data[i/2] = Convolver::symmetricalRound(signal[i] * scale);
 }
 
-// TODO: Write in assembly or macro it (put it in header Convolver.h)
-short Convolver::symmetricalRound(double value)
+inline short Convolver::symmetricalRound(double value)
 {
 	if (value >= 0.0)
 		return (short) floor(value + 0.5);
