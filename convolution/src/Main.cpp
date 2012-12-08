@@ -51,7 +51,7 @@ int main(int argc, char* argv[])
 {
 #ifdef TESTS
 	cout << "===== RUNNING TESTS =====" << endl;
-	//RegressionTest::runAllTests(); 
+	RegressionTest::runAllTests(); 
 	TestConvolver::runAllTests();
 	cout << "==== TESTS COMPLETED ====" << endl;
 	system("pause");
@@ -71,15 +71,15 @@ int main(int argc, char* argv[])
 
 	cout << "DR Size: " << dry->getDataSize() << " IR Size: " << ir->getDataSize() << endl;
 
-	short* result;	// Resulting data of convolution to write to file
 	int P;			// Length of result
+	short* result;	// Resulting data of convolution to write to file
 
 	/* Normalize the input data to -1 and +1 */
 	double* dryNormalized = new double[dry->getDataSize()];
 	double* irNormalized = new double[ir->getDataSize()];
 	Convolver::dataToSignal(dry->getData(), dry->getDataSize(), dry->getAbsMinValue(), dryNormalized);
 	Convolver::dataToSignal(ir->getData(), ir->getDataSize(), ir->getAbsMinValue(), irNormalized);
-		
+	
 	if (ir->getNumChannels() == 1) {
 		P = dry->getDataSize() + ir->getDataSize() - 1;
 
@@ -96,15 +96,22 @@ int main(int argc, char* argv[])
 		SoundFile::save(argv[3], ir->getNumChannels(), dry->getBitsPerSample(), dry->getSampleRate(), result, P);
 	}
 	else if (ir->getNumChannels() == 2) {
+		/* Calculate half size of impulse response ONCE and store in halfM */
+		// TODO: Shift
+		int halfM = ir->getDataSize()/2;
+
 		/* P = N+(M/2)-1, where P is the length of each half of this two-channel convolution */
-		P = dry->getDataSize() + ir->getDataSize()/2 - 1;
+		P = dry->getDataSize() + halfM - 1;
 
 		/* Split normalized stereo impulse response into left and right channels */
-		double* irLeftNormalized = new double[ir->getDataSize()/2];
-		double* irRightNormalized = new double[ir->getDataSize()/2];
-		for (int i = 0; i < ir->getDataSize()/2; i++) {
-			irLeftNormalized[i] = irNormalized[i*2];
-			irRightNormalized[i] = irNormalized[i*2 + 1];
+		double* irLeftNormalized = new double[halfM];
+		double* irRightNormalized = new double[halfM];
+
+		for (int i = 0, i2 = 0; i < halfM; i++) {
+			// TODO: Shift
+			i2 = i*2;
+			irLeftNormalized[i] = irNormalized[i2];
+			irRightNormalized[i] = irNormalized[i2 + 1];
 		}
 
 		/* Perform time domain convolution */
@@ -112,18 +119,20 @@ int main(int argc, char* argv[])
 		short* resultRight = new short[P];
 
 #ifndef FFT
-		Convolver::convolve(dryNormalized, dry->getDataSize(), irLeftNormalized, ir->getDataSize()/2, resultLeft, P);
-		Convolver::convolve(dryNormalized, dry->getDataSize(), irRightNormalized, ir->getDataSize()/2, resultRight, P);
+		Convolver::convolve(dryNormalized, dry->getDataSize(), irLeftNormalized, halfM, resultLeft, P);
+		Convolver::convolve(dryNormalized, dry->getDataSize(), irRightNormalized, halfM, resultRight, P);
 #else
-		Convolver::fftConvolve(dryNormalized, dry->getDataSize(), irLeftNormalized, ir->getDataSize()/2, resultLeft, P);
-		Convolver::fftConvolve(dryNormalized, dry->getDataSize(), irRightNormalized, ir->getDataSize()/2, resultRight, P);
+		Convolver::fftConvolve(dryNormalized, dry->getDataSize(), irLeftNormalized, halfM, resultLeft, P);
+		Convolver::fftConvolve(dryNormalized, dry->getDataSize(), irRightNormalized, halfM, resultRight, P);
 #endif
 
 		/* Interleave left and right channel data */
 		result = new short[P*2];
-		for (int i = 0; i < P*2; i+=2) {
-			result[i] = resultLeft[i/2];
-			result[i+1] = resultRight[i/2];
+		for (int i = 0, halfI = 0; i < P*2; i+=2) {
+			// TODO: Shift
+			halfI = i/2;
+			result[i] = resultLeft[halfI];
+			result[i+1] = resultRight[halfI];
 		}
 
 		/* Save resulting .wav file */

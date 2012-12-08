@@ -20,7 +20,6 @@ void Convolver::multiplicationConvolution(const double x[], int N, const double 
 
 	/*  Do the convolution  */
 	/*  Outer loop:  process each input value x[n] in turn  */
-	// TODO: Try to flip the two loops since N probably > M. 
 	for (n = 0; n < N; n++) {
 		/*  Inner loop:  process x[n] with each sample of h[]  */
 		for (m = 0; m < M; m++) {
@@ -40,7 +39,6 @@ void Convolver::convolve(double x[], int N, double h[], int M, short y[], int P)
 	double* resultTemp = new double[P];
 	multiplicationConvolution(x, N, h, M, resultTemp, P);
 
-	// TODO: First use min_element, then use this AND combine these two loops	
 	/* Find the lower and upper bounds of the convolved output */
 	double oldMin = resultTemp[0], oldMax = resultTemp[0];
 	for (int i = 0; i < P; i++) {
@@ -120,14 +118,25 @@ void Convolver::four1(double data[], int nn, int isign)
 void Convolver::zeroPadAndTimeToFreqDomain(double *timeDomain, int timeDomainLen, double *outputFreqDomain, int structuredSize)
 {		
 	int i = 0;
+	int i2;
+
+	/* Convert Real signal to Complex signal */
 	for (; i < timeDomainLen; i++ )	{
-		outputFreqDomain[i*2] = timeDomain[i];
-		outputFreqDomain[i*2+1] = 0;
+		// TODO: Shift
+		i2 = i*2;
+		outputFreqDomain[i2] = timeDomain[i];
+		outputFreqDomain[i2+1] = 0.0;
 	}
+
+	/* zero pad */
 	for (; i < structuredSize; i++ ) {
-		outputFreqDomain[i*2] = 0;
-		outputFreqDomain[i*2+1] = 0;
+		// TODO: Shift
+		i2 = i*2;
+		outputFreqDomain[i2] = 0.0;
+		outputFreqDomain[i2+1] = 0.0;
 	}
+
+	/* Convert Time to Frequency Domain */
 	four1(outputFreqDomain-1, structuredSize, 1);
 }
 
@@ -143,18 +152,21 @@ void Convolver::fftConvolve(double x[], int N, double h[], int M, short y[], int
 {
 	/* Find suitable zero-pad length to prevent circular convolution */
 	int structuredSize = 1;
+
 	while (structuredSize < P)
 		structuredSize *= 2;	// TODO: Replace with bit shift
 
-	double* X = new double[structuredSize * 2];
-	double* H = new double[structuredSize * 2];
+	int structuredSize2 = structuredSize*2;
+
+	double* X = new double[structuredSize2];
+	double* H = new double[structuredSize2];
 
 	/* Zero-pad normalized signals and convert to Frequency Domain */	
 	Convolver::zeroPadAndTimeToFreqDomain(x, N, X, structuredSize);
 	Convolver::zeroPadAndTimeToFreqDomain(h, M, H, structuredSize);
 
 	/* Perform Frequency-Domain Convolution */
-	double* R = new double[structuredSize * 2];
+	double* R = new double[structuredSize2];
 	Convolver::complexMultiplicationConvolution(X, H, R, structuredSize);
 
 	/* Convert Frequency-Domain back to Time-Domain */
@@ -165,7 +177,7 @@ void Convolver::fftConvolve(double x[], int N, double h[], int M, short y[], int
 	double min = R[0]/(double)structuredSize, 
 		   max = R[0]/(double)structuredSize;
 
-	for (int i = 0; i < structuredSize*2; i+=2) {
+	for (int i = 0; i < structuredSize2; i+=2) {
 		R[i] /= (double)structuredSize;
 
 		if (R[i] < min)
@@ -176,7 +188,7 @@ void Convolver::fftConvolve(double x[], int N, double h[], int M, short y[], int
 	
 	// TODO: Merge with loop above
 	// TODO: Could also partial unroll it, be careful
-	for (int i = 0; i < structuredSize*2; i+=2) {
+	for (int i = 0; i < structuredSize2; i+=2) {
 		R[i] = Convolver::normalize(R[i], min, max, -1.0, 1.0);
 	}
 
